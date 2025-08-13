@@ -1,0 +1,49 @@
+# Environment
+.env
+venv/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask specific
+instance/
+migrations/*.py[cod]
+
+# Static files
+# Allow static files to be uploaded to repository
+
+# Ignore storage directory contents but keep directory structure
+storage/*/*
+!storage/*/
+
+# Build and distribution
+videoist_flask.egg-info/
+build/
+dist/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmp/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Project specific
+NOTE.txt
+start.ps1
+main/services/testqwentts.py
+TODO.md
