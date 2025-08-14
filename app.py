@@ -94,5 +94,5 @@ app = create_app()
 
 if __name__ == '__main__':
     print("\n应用启动信息:")
-    print(f"服务地址: http://localhost:5009")
-    app.run(host='0.0.0.0', port=5009, debug=app.config.get('DEBUG'))
+    print(f"服务地址: http://localhost:5010")
+    app.run(host='0.0.0.0', port=5010, debug=app.config.get('DEBUG'))

@@ -3,7 +3,7 @@ import json
 
 # 测试后端API连接
 def test_api_connection():
-    url = "http://localhost:5009/login"
+    url = "http://localhost:5010/login"
     payload = {
         "username": "admin",
         "password": "123456"

@@ -14,12 +14,12 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://localhost:5009',
+        target: 'http://localhost:5010',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/storage': {
-        target: 'http://localhost:5009',
+        target: 'http://localhost:5010',
         changeOrigin: true
       }
     }

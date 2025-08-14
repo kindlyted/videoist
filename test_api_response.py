@@ -1,8 +1,8 @@
 import requests
 import json
 
-# 假设Flask应用运行在本地5009端口
-base_url = "http://localhost:5009"
+# 假设Flask应用运行在本地5010端口
+base_url = "http://localhost:5010"
 
 # 测试获取平台统计数据
 def test_platform_stats():
