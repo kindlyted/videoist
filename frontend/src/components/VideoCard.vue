@@ -1,6 +1,6 @@
 <template>
   <div class="card h-full flex flex-col">
-    <div class="relative pb-[56.25%] h-0 overflow-hidden rounded-t-lg">
+    <div class="relative pb-[133.33%] h-0 overflow-hidden rounded-t-lg">
       <img 
         :src="video.thumbnail" 
         :alt="video.title" 
@@ -30,7 +30,9 @@
           <button 
             v-if="showPreview" 
             @click="$emit('preview', video)"
+            :disabled="disabled"
             class="btn btn-primary text-sm"
+            :class="{ 'opacity-50 cursor-not-allowed': disabled }"
           >
             预览
           </button>
@@ -97,6 +99,10 @@ const props = defineProps({
   showDownload: {
     type: Boolean,
     default: true
+  },
+  disabled: {
+    type: Boolean,
+    default: false
   }
 })
 

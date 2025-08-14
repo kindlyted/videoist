@@ -48,6 +48,7 @@
         :video="video"
         :show-edit="true"
         :show-delete="true"
+        :disabled="true"
         @preview="previewVideo"
         @edit="editVideo"
         @delete="requestDeleteVideo"
