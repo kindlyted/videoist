@@ -81,11 +81,19 @@ const router = createRouter({
 })
 
 // 添加导航守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
   // 需要登录的路由
   const protectedRoutes = ['/video-creation', '/notes']
+  
+  // 如果用户未认证但有token，尝试恢复用户状态
+  if (!userStore.isAuthenticated) {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      await userStore.fetchUser()
+    }
+  }
   
   // 检查目标路由是否需要登录
   if (protectedRoutes.includes(to.path) && !userStore.isAuthenticated) {

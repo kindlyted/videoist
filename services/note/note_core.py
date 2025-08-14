@@ -200,11 +200,11 @@ def process_pdf_to_png(file_path, prompt_path, output_dir):
 # 示例调用代码
 if __name__ == "__main__":
 
-    file_path = "./note/static/input/residential.pdf"
-    prompt_path = "./note/static/prompts/keshihua0.prompt"
+    file_path = "./storage/input/residential.pdf"
+    prompt_path = "./static/prompts/keshihua0.prompt"
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    output_path = f"./note/static/output/{timestamp}.html"  # 使用时间戳作为文件名
-    output_pic_path = f"./note/static/output/{timestamp}.png"
+    output_path = f"./static/note_output/{timestamp}.html"  # 使用时间戳作为文件名
+    output_pic_path = f"./static/note_output/{timestamp}.png"
 
     # response = invoke_with_attachment_qwen(file_path, prompt_path, "翻译成中文，并输出为HTML格式", MODEL_NAME="deepseek-v3")
     response = invoke_with_attachment_kimi(file_path, prompt_path, "使用中文")

@@ -5,7 +5,7 @@ import json
 import asyncio
 from datetime import datetime
 from pathlib import Path
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import Config
 
@@ -276,23 +276,28 @@ def generate_video():
             create_video_single(srt_file, audio_filename, output_filename, Config.SCREEN_SIZE, title_txt)
         
         # 保存视频记录到数据库
-        current_user_id = get_jwt_identity()
-        video = Video(
-            title=title_txt,
-            description=input_text[:200],  # 取前200个字符作为描述
-            file_path=f'/video/static/output/outputs/{base_filename}.mp4',
-            thumbnail_path=f'/video/static/output/outputs/{base_filename}.png',
-            author_id=current_user_id
-        )
-        db.session.add(video)
-        db.session.commit()
+        # current_user_id = get_jwt_identity()
+        # video = Video(
+        #     title=title_txt,
+        #     description=input_text[:200],  # 取前200个字符作为描述
+        #     file_path=f'/video/static/output/outputs/{base_filename}.mp4',
+        #     thumbnail_path=f'/video/static/output/outputs/{base_filename}.png',
+        #     author_id=current_user_id
+        # )
+        # db.session.add(video)
+        # db.session.commit()
         
         return jsonify({
-            'cover_path': f'/video/static/output/outputs/{base_filename}.png',
-            'video_path': f'/video/static/output/outputs/{base_filename}.mp4'
+            'success': True,
+            'message': '视频生成成功',
+            'cover_path': url_for('storage_files', filename=f'output/outputs/{base_filename}.png'),
+            'video_path': url_for('storage_files', filename=f'output/outputs/{base_filename}.mp4')
         })
     except Exception as e:
-        return jsonify({'error': f'生成视频时出错: {str(e)}'}), 500
+        return jsonify({
+            'success': False,
+            'message': f'生成视频时出错: {str(e)}'
+        }), 500
 
 @video_bp.route('/publish-video', methods=['POST'])
 def publish_video():
@@ -327,25 +332,25 @@ def publish_video():
     except Exception as e:
         return jsonify({'error': f'上传视频时出错: {str(e)}'}), 500
 
-@video_bp.route('/download-video')
-@jwt_required()
-def download_video():
-    filename = request.args.get('filename', '')
-    if not filename:
-        return jsonify({'error': '文件名不能为空'}), 400
+# @video_bp.route('/download-video')
+# @jwt_required()
+# def download_video():
+#     filename = request.args.get('filename', '')
+#     if not filename:
+#         return jsonify({'error': '文件名不能为空'}), 400
     
-    file_path = str(Config.OUTPUT_DIR / filename)
-    if not os.path.exists(file_path):
-        return jsonify({'error': '文件不存在'}), 404
+#     file_path = str(Config.OUTPUT_DIR / filename)
+#     if not os.path.exists(file_path):
+#         return jsonify({'error': '文件不存在'}), 404
     
-    try:
-        return send_file(
-            file_path,
-            as_attachment=True,
-            download_name=f"video_{datetime.now().strftime('%Y%m%d')}.mp4"
-        )
-    except Exception as e:
-        return jsonify({'error': f'下载失败: {str(e)}'}), 500
+#     try:
+#         return send_file(
+#             file_path,
+#             as_attachment=True,
+#             download_name=f"video_{datetime.now().strftime('%Y%m%d')}.mp4"
+#         )
+#     except Exception as e:
+#         return jsonify({'error': f'下载失败: {str(e)}'}), 500
 
 @video_bp.route('/videos', methods=['GET'])
 @jwt_required()

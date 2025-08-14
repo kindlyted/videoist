@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, computed } from 'vue'
+import { computed } from 'vue'
 
 // 定义属性
 const props = defineProps({

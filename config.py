@@ -8,6 +8,7 @@ load_dotenv()
 class Config:
     # ==================== 基础配置 ====================
     SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key')
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'dev-jwt-secret-key')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # ==================== 项目目录结构 ====================
@@ -108,6 +109,7 @@ class ProductionConfig(Config):
         return [
             str(Config.STATIC_FOLDER),
             str(Config.ARTICLE_DIR),
+            str(Config.STORAGE_FOLDER),
             '/tmp',
             '/var/www/videos'
         ]

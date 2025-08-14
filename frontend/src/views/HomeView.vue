@@ -85,7 +85,7 @@ const goToRegister = () => {
 }
 
 const goToVideoCreation = () => {
-  router.push('/video')
+  router.push('/video-creation')
 }
 
 const goToDashboard = () => {

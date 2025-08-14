@@ -75,7 +75,6 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue'
 
 // 定义属性
 const props = defineProps({

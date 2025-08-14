@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from pathlib import Path
 from extensions import db, migrate
 from config import Config, config
@@ -15,6 +15,11 @@ def create_app():
     # 确保正确解析JSON请求
     app.config['JSON_AS_ASCII'] = False
     app.config['JSON_SORT_KEYS'] = False
+    
+    # 配置静态文件服务，使storage目录下的文件可以通过HTTP访问
+    @app.route('/storage/<path:filename>', endpoint='storage_files')
+    def storage_files(filename):
+        return send_from_directory(Config.STORAGE_FOLDER, filename)
 
     # 从环境变量获取允许的域名列表
     ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
@@ -48,6 +53,9 @@ def create_app():
     db.init_app(app)
     migrate.init_app(app, db)
     jwt = JWTManager(app)
+    
+    # 配置JWT密钥
+    app.config['JWT_SECRET_KEY'] = app.config.get('JWT_SECRET_KEY')
     
     # 配置JWT错误处理器
     @jwt.expired_token_loader

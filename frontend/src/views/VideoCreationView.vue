@@ -96,7 +96,8 @@
           @click="processUrl"
           :disabled="isProcessing"
         >
-          <CloudArrowUpIcon class="h-5 w-5 mr-2" />
+          <SpinnerIcon v-if="isProcessing" />
+          <CloudArrowUpIcon v-else class="h-5 w-5 mr-2" />
           {{ isProcessing ? '处理中...' : '上传并处理' }}
         </button>
       </div>
@@ -142,7 +143,8 @@
           @click="generateTitle"
           :disabled="isGeneratingTitle"
         >
-          <SparklesIcon class="h-5 w-5 mr-2" />
+          <SpinnerIcon v-if="isGeneratingTitle" />
+          <SparklesIcon v-else class="h-5 w-5 mr-2" />
           {{ isGeneratingTitle ? '生成中...' : '生成标题' }}
         </button>
       </div>
@@ -185,7 +187,7 @@
           v-model="contentForm.voice"
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         >
-          <option value="">请选择语音</option>
+          <option value="" disabled>请选择语音</option>
           <option 
             v-for="voice in voiceOptions" 
             :key="voice.id" 
@@ -212,7 +214,8 @@
           @click="generateVideo"
           :disabled="isGeneratingVideo"
         >
-          <VideoCameraIcon class="h-5 w-5 mr-2" />
+          <SpinnerIcon v-if="isGeneratingVideo" />
+          <VideoCameraIcon v-else class="h-5 w-5 mr-2" />
           {{ isGeneratingVideo ? '生成中...' : '生成视频' }}
         </button>
         <button
@@ -221,8 +224,10 @@
           @click="uploadVideo"
           :disabled="!videoGenerated"
         >
-          <CloudArrowUpIcon class="h-5 w-5 mr-2" />
-          上传平台
+          <SpinnerIcon v-if="isUploadingVideo" />
+          <CloudArrowUpIcon v-else class="h-5 w-5 mr-2" />
+          <span v-if="isUploadingVideo">上传中...</span>
+          <span v-else>上传平台</span>
         </button>
       </div>
       
@@ -230,26 +235,29 @@
       <div class="mt-4">
         <h3 class="font-semibold mb-2">预览</h3>
         
-        <!-- 封面预览 -->
-        <div class="mb-4" v-if="preview.coverImage">
-          <p class="font-medium mb-2">封面预览</p>
-          <img 
-            id="coverImage" 
-            :src="preview.coverImage" 
-            alt="封面预览" 
-            class="max-w-xs h-auto rounded"
-          />
-        </div>
-        
-        <!-- 视频预览 -->
-        <div class="mb-4" v-if="preview.videoUrl">
-          <p class="font-medium mb-2">视频预览</p>
-          <video 
-            id="outputVideo" 
-            :src="preview.videoUrl" 
-            controls 
-            class="max-w-md h-auto rounded"
-          ></video>
+        <!-- 封面预览和视频预览并列 -->
+        <div class="flex flex-wrap gap-4 mb-4">
+          <!-- 封面预览 -->
+          <div v-if="preview.coverImage" class="flex-1 min-w-[300px]">
+            <p class="font-medium mb-2">封面预览</p>
+            <img 
+              id="coverImage" 
+              :src="preview.coverImage" 
+              alt="封面预览" 
+              class="w-full h-auto rounded max-h-[300px] object-contain"
+            />
+          </div>
+          
+          <!-- 视频预览 -->
+          <div v-if="preview.videoUrl" class="flex-1 min-w-[300px]">
+            <p class="font-medium mb-2">视频预览</p>
+            <video 
+              id="outputVideo" 
+              :src="preview.videoUrl" 
+              controls 
+              class="w-full h-auto rounded max-h-[300px]"
+            ></video>
+          </div>
         </div>
         
         <!-- 下载链接 -->
@@ -281,6 +289,7 @@ import {
   CloudArrowUpIcon,
   ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
+import SpinnerIcon from '@/components/SpinnerIcon.vue'
 
 // URL处理表单
 const urlForm = ref({
@@ -328,6 +337,7 @@ const preview = ref({
 const isProcessing = ref(false)
 const isGeneratingTitle = ref(false)
 const isGeneratingVideo = ref(false)
+const isUploadingVideo = ref(false)
 const videoGenerated = ref(false)
 const urlResults = ref(null)
 
@@ -421,18 +431,26 @@ const generateVideo = async () => {
       voice: contentForm.value.voice
     })
     
-    // 使用后端返回的cover_path和video_path字段更新预览数据
-    // 将相对路径转换为完整的URL路径
-    preview.value = {
-      coverImage: `${import.meta.env.VITE_API_BASE_URL}${response.data.cover_path}`,
-      videoUrl: `${import.meta.env.VITE_API_BASE_URL}${response.data.video_path}`,
-      downloadLink: `${import.meta.env.VITE_API_BASE_URL}${response.data.video_path}`
-    }
+    // 打印响应变量用于调试
+    console.log('视频生成响应:', response)
     
-    videoGenerated.value = true
+    // 检查后端返回的成功状态
+    if (response.data.success) {
+      // 使用后端返回的cover_path和video_path字段更新预览数据
+      preview.value = {
+        coverImage: response.data.cover_path,
+        videoUrl: response.data.video_path,
+        downloadLink: response.data.video_path
+      }
+      
+      videoGenerated.value = true
+    } else {
+      // 处理后端返回的错误消息
+      throw new Error(response.data.message || '生成视频失败')
+    }
   } catch (error) {
     console.error('生成视频失败:', error)
-    alert('生成视频失败，请重试')
+    alert(`生成视频失败: ${error.message || '请重试'}`)
   } finally {
     isGeneratingVideo.value = false
   }
@@ -445,6 +463,8 @@ const uploadVideo = async () => {
     return
   }
   
+  isUploadingVideo.value = true
+  
   try {
     // 调用后端API上传视频
     // 使用longProcessApi实例，不设置超时时间
@@ -456,6 +476,8 @@ const uploadVideo = async () => {
   } catch (error) {
     console.error('上传视频失败:', error)
     alert('上传视频失败，请重试')
+  } finally {
+    isUploadingVideo.value = false
   }
 }
 
@@ -470,6 +492,11 @@ const fetchVoiceOptions = async () => {
       id: name,
       name: name
     }))
+    
+    // 设置默认语音选项
+    if (response.data.default_voice) {
+      contentForm.value.voice = response.data.default_voice
+    }
   } catch (error) {
     console.error('获取语音选项失败:', error)
     // 如果获取失败，使用模拟数据
@@ -478,6 +505,9 @@ const fetchVoiceOptions = async () => {
       { id: 'xiaofeng', name: '小峰' },
       { id: 'xiaomei', name: '小美' }
     ]
+    
+    // 设置默认语音选项
+    contentForm.value.voice = 'xiaoyan'
   }
 }
 
