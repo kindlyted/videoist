@@ -24,6 +24,17 @@ onMounted(async () => {
     await userStore.fetchUser()
   }
 })
+
+// 监听localStorage变化，确保在新标签页中也能正确恢复用户状态
+window.addEventListener('storage', async (event) => {
+  if (event.key === 'access_token') {
+    if (event.newValue) {
+      await userStore.fetchUser()
+    } else {
+      userStore.$reset()
+    }
+  }
+})
 </script>
 
 <style>

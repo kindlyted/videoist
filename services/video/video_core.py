@@ -35,8 +35,6 @@ from jinja2 import Template
 import edge_tts
 # ===== 浏览器自动化 =====
 from playwright.sync_api import sync_playwright
-# ===== AI服务 =====
-from openai import OpenAI
 
 async def speaking(OUTPUT_FILE: str, WEBVTT_FILE: str, TEXT: str, VOICE: str) -> None:
     # 确保目录存在
@@ -55,14 +53,7 @@ async def speaking(OUTPUT_FILE: str, WEBVTT_FILE: str, TEXT: str, VOICE: str) ->
     with open(WEBVTT_FILE, "w", encoding="utf-8") as file:
         file.write(submaker.get_srt())
 
-async def process_dialogue(
-    input_file: str,
-    output_audio: str,
-    output_srt: str,
-    voice_mapping: Dict[str, str],
-    temp_dir: str = "tmp",
-    silence_duration_ms: int = 100
-) -> None:
+async def process_dialogue(input_file: str, output_audio: str, output_srt: str, voice_mapping: Dict[str, str], temp_dir: str = "tmp", silence_duration_ms: int = 100) -> None:
     """
     处理多角色对话文本，生成合并后的音频和字幕（带静音间隔）
     
@@ -112,10 +103,7 @@ async def process_dialogue(
         except:
             pass
 
-def parse_dialogue_file(
-    file_path: str, 
-    voice_mapping: Dict[str, str]
-) -> List[Tuple[str, str]]:
+def parse_dialogue_file(file_path: str, voice_mapping: Dict[str, str]) -> List[Tuple[str, str]]:
     """
     解析对话文本文件，返回(角色, 文本)列表
     
@@ -160,13 +148,7 @@ def parse_dialogue_file(
     
     return dialogues
 
-def merge_audio_and_srt_with_silence(
-    temp_dir: str, 
-    part_count: int,
-    output_audio: str,
-    output_srt: str,
-    silence_duration_ms: int = 100
-) -> None:
+def merge_audio_and_srt_with_silence(temp_dir: str, part_count: int, output_audio: str, output_srt: str, silence_duration_ms: int = 100) -> None:
     """
     合并多个音频和字幕文件，在音频间添加静音间隔
     
@@ -647,92 +629,6 @@ def creating_cover(text, keywords, cover_filename) -> None:
             if html_file_path.exists():
                 html_file_path.unlink()
 
-# gpt part 生成正文，postist_core.py里也有，但后缀不同表示api不同
-def generating_byds(content, prompt_path):
-    client = OpenAI(
-        api_key=os.getenv('API_KEY_DS'),
-        base_url=os.getenv('URL_DS'), 
-    )
-    # 定义提示词
-    with open(prompt_path, 'r', encoding='utf-8') as file:
-        your_prompt = file.read()
-    your_prompt = your_prompt + content
-    try:
-        completion = client.chat.completions.create(
-            model='deepseek-chat',   
-            messages = [
-                {
-                    "role": "user",
-                    "content": your_prompt
-                }
-            ],
-            stream=False
-        )
-        print(completion.choices[0].message.content)
-        answer = completion.choices[0].message.content
-    except Exception as e:
-        print("提示", e)
-        answer = "敏感词censored by Deepseek"
-    print("DeepSeek大模型工作中，请稍等片刻")
-    return answer
-
-# gpt part 生成正文，postist_core.py里也有，但后缀不同表示api不同
-def generating_bykm(content, prompt_path):
-    client = OpenAI(
-        api_key=os.getenv('API_KEY_KIMI'),
-        base_url=os.getenv('URL_KIMI'), 
-    )
-    # 定义提示词
-    with open(prompt_path, 'r', encoding='utf-8') as file:
-        your_prompt = file.read()
-    your_prompt = your_prompt + content
-    try:
-        completion = client.chat.completions.create(
-            model='moonshot-v1-8k',   
-            messages = [
-                {
-                    "role": "user",
-                    "content": your_prompt
-                }
-            ],
-            stream=False
-        )
-        print(completion.choices[0].message.content)
-        answer = completion.choices[0].message.content
-    except Exception as e:
-        print("提示", e)
-        answer = "敏感词censored by Moonshot"
-    print("Moonshot大模型工作中，请稍等片刻")
-    return answer
-
-# gpt part 生成正文
-def generating_jskb(content, prompt_path):
-    client = OpenAI(
-        api_key=os.getenv('API_KEY_DS'),
-        base_url=os.getenv('URL_DS'), 
-    )
-    # 定义提示词
-    with open(prompt_path, 'r', encoding='utf-8') as file:
-        your_prompt = file.read()
-    # your_prompt = your_prompt + content
-    try:
-        completion = client.chat.completions.create(
-            model='deepseek-chat',   
-            messages = [{"role": "system", "content": your_prompt}, {"role": "user", "content": content}],
-            stream=False,
-            temperature=0.4,          # 降低随机性
-            # max_tokens=4096,          # 防止过长
-            top_p=0.9,                # 平衡多样性
-            frequency_penalty=0.5,    # 减少重复
-            presence_penalty=0.3,     # 适度控制主题跳跃
-            response_format={'type': 'json_object'}
-        )
-        answer = completion.choices[0].message.content
-    except Exception as e:
-        print("提示", e)
-        answer = "敏感词censored by Deepseek"
-    print("DeepSeek大模型工作中，请稍等片刻")
-    return answer
 
 # 从网页中提取文本
 def extractting(url):

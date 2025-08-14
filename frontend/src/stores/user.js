@@ -4,8 +4,19 @@ import api from '@/services/api'
 export const useUserStore = defineStore('user', {
   state: () => ({
     user: null,
+    token: null,
     isAuthenticated: false
   }),
+  
+  getters: {
+    // 从localStorage获取token的getter
+    getToken: (state) => {
+      if (!state.token) {
+        state.token = localStorage.getItem('access_token')
+      }
+      return state.token
+    }
+  },
   
   actions: {
     async login(credentials) {
@@ -14,6 +25,7 @@ export const useUserStore = defineStore('user', {
         const { user, access_token } = response.data
         
         this.user = user
+        this.token = access_token
         this.isAuthenticated = true
         
         // 保存token到localStorage
@@ -31,6 +43,7 @@ export const useUserStore = defineStore('user', {
         const { user, access_token } = response.data
         
         this.user = user
+        this.token = access_token
         this.isAuthenticated = true
         
         // 保存token到localStorage
@@ -49,6 +62,7 @@ export const useUserStore = defineStore('user', {
         console.error('Logout error:', error)
       } finally {
         this.user = null
+        this.token = null
         this.isAuthenticated = false
         
         // 清除localStorage中的token
@@ -59,12 +73,13 @@ export const useUserStore = defineStore('user', {
     async fetchUser() {
       try {
         const response = await api.get('/user-info')
-        this.user = response.data
+        this.user = response.data.user  // 注意：后端返回的数据结构是 { user: {...} }
         this.isAuthenticated = true
         
         return { success: true }
       } catch (error) {
         this.user = null
+        this.token = null
         this.isAuthenticated = false
         
         // 清除localStorage中的token

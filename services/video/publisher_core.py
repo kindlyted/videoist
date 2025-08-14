@@ -1,4 +1,5 @@
 # freepublish接口不是群发接口，不能直接使用
+# 有待修改，很多地方应该改成外部参数注入
 import os
 import re
 import json
@@ -10,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 from urllib.parse import unquote
 from .video_core import markdown_to_html
 from config import Config
+from models import WechatAccount
 
 class WeChatPublisher:
     def __init__(self, app_id: str, app_secret: str, article_name: str = "demo", source_url: str = ""):
@@ -186,10 +188,9 @@ class WeChatPublisher:
                 raise ValueError("错误：文章内容为空")
             if not article["thumb_media_id"]:
                 raise ValueError("错误：未设置封面图")
-            # 读取HTML文件,并添加到文章内容末尾
-            footer_path = os.path.join("video", "static", "html", "seo_footer_wx.html")
-            with open(footer_path, "r", encoding="utf-8") as f:
-                SEO_FOOTER = f.read()
+            # 从数据库读取微信页脚内容
+            wechat_account = WechatAccount.query.filter_by(is_active=True).first()
+            SEO_FOOTER = wechat_account.wx_footer if wechat_account and wechat_account.wx_footer else ""
             article['content'] = article['content'] + SEO_FOOTER
 
             # 3. 准备发布数据

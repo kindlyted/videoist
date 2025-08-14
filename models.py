@@ -58,15 +58,7 @@ class Video(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     
-    # WordPress发布相关字段
-    wordpress_post_id = db.Column(db.Integer, nullable=True)
-    wordpress_post_url = db.Column(db.String(500), nullable=True)
-    published_to_wordpress = db.Column(db.Boolean, default=False)
-    wordpress_published_at = db.Column(db.DateTime, nullable=True)
-    
-    # 微信公众号发布相关字段
-    published_to_wechat = db.Column(db.Boolean, default=False)
-    wechat_published_at = db.Column(db.DateTime, nullable=True)
+
     
     author = db.relationship('User', backref='videos')
 
@@ -128,6 +120,8 @@ class WordPressSite(db.Model):
     site_url = db.Column(db.String(255), nullable=False)
     username = db.Column(db.String(100), nullable=False)
     api_key = db.Column(db.String(255), nullable=False)
+    wp_tag = db.Column(db.JSON, nullable=True)  # 用于存储标签字典
+    wp_footer = db.Column(db.Text, nullable=True)  # 用于存储HTML页脚内容
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -152,6 +146,7 @@ class WechatAccount(db.Model):
     account_id = db.Column(db.String(100), nullable=False)
     app_id = db.Column(db.String(100), nullable=False)
     app_secret = db.Column(db.String(255), nullable=False)
+    wx_footer = db.Column(db.Text, nullable=True)  # 用于存储HTML页脚内容
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

@@ -33,6 +33,12 @@
                   <div>
                     <h3 class="font-medium text-gray-900">{{ site.name }}</h3>
                     <p class="text-sm text-gray-500 mt-1">{{ site.url }}</p>
+                    <p class="text-sm text-gray-500 mt-1">用户名: {{ site.username }}</p>
+                    <p class="text-sm text-gray-500 mt-1">WP Tag: {{ site.wpTag }}</p>
+                    <div class="text-sm text-gray-500 mt-1">
+                      <p class="font-medium">Footer:</p>
+                      <div class="border border-gray-300 rounded p-2 mt-1 bg-white" v-html="site.wpFooter"></div>
+                    </div>
                   </div>
                   <div class="flex space-x-2">
                     <button 
@@ -52,9 +58,6 @@
                   </div>
                 </div>
                 <div class="mt-3 flex items-center text-sm text-gray-500">
-                  <span>{{ site.postsCount }} 篇文章</span>
-                  <span class="mx-2">•</span>
-                  <span>上次同步: {{ formatDate(site.lastSync) }}</span>
                 </div>
               </div>
             </div>
@@ -140,14 +143,39 @@
           >
         </div>
         <div class="mb-4">
-          <label class="form-label">API 密钥</label>
+          <label class="form-label">用户名</label>
           <input 
-            v-model="siteForm.apiKey" 
-            type="password" 
+            v-model="siteForm.username" 
+            type="text" 
             class="form-input w-full" 
             required
           >
         </div>
+        <div class="mb-4">
+            <label class="form-label">API Key</label>
+            <input 
+              v-model="siteForm.apiKey" 
+              type="password" 
+              class="form-input w-full" 
+              required
+            >
+          </div>
+          <div class="mb-4">
+            <label class="form-label">WP Tag</label>
+            <input 
+              v-model="siteForm.wpTag" 
+              type="text" 
+              class="form-input w-full"
+            >
+          </div>
+          <div class="mb-4">
+            <label class="form-label">WP Footer</label>
+            <textarea 
+              v-model="siteForm.wpFooter" 
+              class="form-input w-full" 
+              rows="3"
+            ></textarea>
+          </div>
       </form>
     </Modal>
     
@@ -189,7 +217,10 @@ const siteForm = ref({
   id: null,
   name: '',
   url: '',
-  apiKey: ''
+  username: '',
+  apiKey: '',
+  wpTag: '',
+  wpFooter: ''
 })
 
 // 计算属性
@@ -217,6 +248,8 @@ const fetchSites = async () => {
       name: site.site_name,
       url: site.site_url,
       username: site.username,
+      wpTag: site.wp_tag || '',
+      wpFooter: site.wp_footer || '',
       postsCount: 0, // 需要从后端获取或通过其他方式计算
       lastSync: new Date().toISOString() // 需要从后端获取
     }))
@@ -253,7 +286,9 @@ const addSite = async () => {
       site_name: siteForm.value.name,
       site_url: siteForm.value.url,
       username: siteForm.value.username,
-      api_key: siteForm.value.apiKey
+      api_key: siteForm.value.apiKey,
+      wp_tag: siteForm.value.wpTag,
+      wp_footer: siteForm.value.wpFooter
     })
     
     // 添加成功后重新获取站点列表
@@ -272,7 +307,9 @@ const updateSite = async () => {
       site_name: siteForm.value.name,
       site_url: siteForm.value.url,
       username: siteForm.value.username,
-      api_key: siteForm.value.apiKey
+      api_key: siteForm.value.apiKey,
+      wp_tag: siteForm.value.wpTag,
+      wp_footer: siteForm.value.wpFooter
     })
     
     // 更新成功后重新获取站点列表
@@ -307,7 +344,9 @@ const editSite = (site) => {
     name: site.name, 
     url: site.url, 
     username: site.username, 
-    apiKey: '' 
+    apiKey: '',
+    wpTag: site.wpTag || '',
+    wpFooter: site.wpFooter || ''
   }
 }
 

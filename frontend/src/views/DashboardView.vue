@@ -6,8 +6,8 @@
       <HandRaisedIcon class="h-8 w-8 text-blue-500 ml-4" />
     </div>
     
-    <!-- 账户信息区域 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <!-- 第一行卡片区域 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <!-- 账户信息卡片 -->
       <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-semibold mb-4">账户信息</h2>
@@ -17,18 +17,19 @@
         </div>
         <button 
           class="mt-4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center"
+          @click="router.push('/settings')"
         >
           <InformationCircleIcon class="h-5 w-5 mr-2" />
           查看详情
         </button>
       </div>
       
-      <!-- 平台统计卡片 -->
+      <!-- 文章平台卡片 -->
       <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">平台统计</h2>
+        <h2 class="text-xl font-semibold mb-4">文章平台</h2>
         <div class="space-y-2">
-          <p><span class="font-medium">WordPress站点数量:</span> {{ wordpressSites.length }}</p>
-          <p><span class="font-medium">微信公众号数量:</span> {{ wechatAccounts.length }}</p>
+          <p><span class="font-medium">WordPress站点数量:</span> {{ platformStats.wordpressSitesCount }}</p>
+          <p><span class="font-medium">微信公众号数量:</span> {{ platformStats.wechatAccountsCount }}</p>
         </div>
         <div class="mt-4 flex space-x-2">
           <button 
@@ -47,53 +48,83 @@
           </button>
         </div>
       </div>
-    </div>
-    
-    <!-- 最近活动区域 -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-      <h2 class="text-xl font-semibold mb-4">最近活动</h2>
-      <ul class="space-y-2">
-        <li 
-          v-for="activity in recentActivities" 
-          :key="activity.id" 
-          class="border-b border-gray-200 pb-2"
-        >
-          {{ activity.description }}
-        </li>
-        <li v-if="recentActivities.length === 0" class="text-gray-500">
-          暂无活动
-        </li>
-      </ul>
-    </div>
-    
-    <!-- 导航菜单 -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-xl font-semibold mb-4">导航菜单</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      
+      <!-- 视频平台卡片 -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">视频平台</h2>
+        <div class="space-y-2">
+          <p><span class="font-medium">抖音:</span> 已连接</p>
+          <p><span class="font-medium">小红书:</span> 未连接</p>
+        </div>
         <button 
-          v-for="item in menuItems" 
-          :key="item.name"
-          @click="navigateTo(item.path)"
-          :class="[
-            'py-2 px-4 rounded flex items-center',
-            item.type === 'primary' 
-              ? 'bg-blue-500 hover:bg-blue-700 text-white' 
-              : 'bg-transparent hover:bg-blue-500 text-blue-700 hover:text-white border border-blue-500'
-          ]"
+          class="mt-4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center"
         >
-          <component :is="getIconForMenuItem(item.name)" class="h-5 w-5 mr-2" />
-          {{ item.name }}
+          <InformationCircleIcon class="h-5 w-5 mr-2" />
+          管理平台
         </button>
       </div>
     </div>
+    
+    <!-- 第二行卡片区域 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- 视频统计卡片 -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">视频统计</h2>
+        <div class="space-y-2">
+          <p><span class="font-medium">视频总数:</span> {{ videoStats.videoCount }}</p>
+        </div>
+        <button 
+          class="mt-4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center"
+          @click="navigateTo('/videos')"
+        >
+          <InformationCircleIcon class="h-5 w-5 mr-2" />
+          视频管理
+        </button>
+      </div>
+      
+      <!-- 笔记统计卡片 -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">笔记统计</h2>
+        <div class="space-y-2">
+          <p>暂无数据</p>
+        </div>
+        <button 
+          class="mt-4 bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded flex items-center"
+          @click="navigateTo('/notes')"
+        >
+          <InformationCircleIcon class="h-5 w-5 mr-2" />
+          笔记管理
+        </button>
+      </div>
+      
+      <!-- 最近活动卡片 -->
+      <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">最近活动</h2>
+        <ul class="space-y-2">
+          <li 
+            v-for="activity in recentActivities" 
+            :key="activity.id" 
+            class="border-b border-gray-200 pb-2"
+          >
+            {{ activity.description }}
+          </li>
+          <li v-if="recentActivities.length === 0" class="text-gray-500">
+            暂无活动
+          </li>
+        </ul>
+      </div>
+    </div>
+    
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { HandRaisedIcon, InformationCircleIcon, GlobeAltIcon, ChatBubbleLeftRightIcon, UserIcon, CogIcon, InformationCircleIcon as InfoIcon, QuestionMarkCircleIcon } from '@heroicons/vue/24/outline'
+import api from '@/services/api'
+import { HandRaisedIcon, InformationCircleIcon, GlobeAltIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -101,51 +132,50 @@ const userStore = useUserStore()
 // 用户数据
 const user = computed(() => userStore.user)
 
-// 模拟数据
-const wordpressSites = ref([
-  { id: 1, name: '我的博客' },
-  { id: 2, name: '公司网站' }
-])
+// 平台统计数据
+const platformStats = ref({
+  wordpressSitesCount: 0,
+  wechatAccountsCount: 0
+})
 
-const wechatAccounts = ref([
-  { id: 1, name: '个人公众号' }
-])
+// 视频统计数据
+const videoStats = ref({
+  videoCount: 0
+})
 
 const recentActivities = ref([
   { id: 1, description: '系统登录' },
   { id: 2, description: '视频生成成功' }
 ])
 
-// 菜单项
-const menuItems = ref([
-  { name: '账户信息', path: '/account', type: 'primary' },
-  { name: '设置', path: '/settings', type: 'secondary' },
-  { name: 'WordPress', path: '/wordpress', type: 'secondary' },
-  { name: '微信公众号', path: '/wechat', type: 'secondary' },
-  { name: '关于我们', path: '/about', type: 'secondary' },
-  { name: '退出登录', path: '/logout', type: 'secondary' }
-])
-
-// 导航方法
-const navigateTo = (path) => {
-  if (path === '/logout') {
-    handleLogout()
-  } else {
-    router.push(path)
+// 获取平台统计数据
+const fetchPlatformStats = async () => {
+  try {
+    const response = await api.get('/platform-stats')
+    platformStats.value = {
+      wordpressSitesCount: response.data.wordpress_sites_count,
+      wechatAccountsCount: response.data.wechat_accounts_count
+    }
+  } catch (error) {
+    console.error('获取平台统计数据失败:', error)
   }
 }
 
-// 为菜单项获取相应图标
-const getIconForMenuItem = (itemName) => {
-  const iconMap = {
-    '账户信息': UserIcon,
-    '设置': CogIcon,
-    'WordPress': GlobeAltIcon,
-    '微信公众号': ChatBubbleLeftRightIcon,
-    '关于我们': InfoIcon,
-    '退出登录': QuestionMarkCircleIcon
+// 获取视频统计数据
+const fetchVideoStats = async () => {
+  try {
+    const response = await api.get('/video-stats')
+    videoStats.value = {
+      videoCount: response.data.video_count
+    }
+  } catch (error) {
+    console.error('获取视频统计数据失败:', error)
   }
-  return iconMap[itemName] || InfoIcon
+}
+
+// 导航方法
+const navigateTo = (path) => {
+  router.push(path)
 }
 
 // 退出登录方法
@@ -153,4 +183,10 @@ const handleLogout = async () => {
   await userStore.logout()
   router.push('/login')
 }
+
+// 组件挂载时获取数据
+onMounted(async () => {
+  await fetchPlatformStats()
+  await fetchVideoStats()
+})
 </script>

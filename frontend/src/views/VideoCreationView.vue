@@ -36,26 +36,18 @@
           发布平台
         </label>
         <div class="flex space-x-4">
-          <label class="inline-flex items-center">
-            <input
-              id="wordpressSwitch"
-              type="checkbox"
-              v-model="urlForm.wordpressSwitch"
-              class="form-checkbox"
-              :disabled="!hasWordPressSites"
-            />
-            <span class="ml-2">发布到WordPress</span>
-          </label>
-          <label class="inline-flex items-center">
-            <input
-              id="wechatSwitch"
-              type="checkbox"
-              v-model="urlForm.wechatSwitch"
-              class="form-checkbox"
-              :disabled="!hasWeChatAccounts"
-            />
-            <span class="ml-2">发布到微信公众号</span>
-          </label>
+          <Switch
+            id="wordpressSwitch"
+            v-model="urlForm.wordpressSwitch"
+            label="发布到WordPress"
+            :disabled="!hasWordPressSites"
+          />
+          <Switch
+            id="wechatSwitch"
+            v-model="urlForm.wechatSwitch"
+            label="发布到微信公众号"
+            :disabled="!hasWeChatAccounts"
+          />
         </div>
       </div>
       
@@ -290,6 +282,7 @@ import {
   ArrowDownTrayIcon
 } from '@heroicons/vue/24/outline'
 import SpinnerIcon from '@/components/SpinnerIcon.vue'
+import Switch from '@/components/Switch.vue'
 
 // URL处理表单
 const urlForm = ref({
@@ -341,9 +334,9 @@ const isUploadingVideo = ref(false)
 const videoGenerated = ref(false)
 const urlResults = ref(null)
 
-// 模拟数据
-const hasWordPressSites = ref(true)
-const hasWeChatAccounts = ref(true)
+// 用户凭据状态
+const hasWordPressSites = ref(false)
+const hasWeChatAccounts = ref(false)
 const voiceOptions = ref([
   { id: 'voice1', name: '语音1' },
   { id: 'voice2', name: '语音2' },
@@ -481,6 +474,26 @@ const uploadVideo = async () => {
   }
 }
 
+// 获取用户凭据信息
+const fetchUserCredentials = async () => {
+  try {
+    // 获取WordPress站点列表
+    const wpResponse = await api.get('/wordpress')
+    hasWordPressSites.value = wpResponse.data.length > 0 && 
+      wpResponse.data.some(site => site.site_url && site.username)
+    
+    // 获取微信公众号列表
+    const wechatResponse = await api.get('/wechat')
+    hasWeChatAccounts.value = wechatResponse.data.length > 0 && 
+      wechatResponse.data.some(account => account.app_id && account.app_secret)
+  } catch (error) {
+    console.error('获取用户凭据信息失败:', error)
+    // 出错时默认禁用开关
+    hasWordPressSites.value = false
+    hasWeChatAccounts.value = false
+  }
+}
+
 // 获取语音选项
 const fetchVoiceOptions = async () => {
   try {
@@ -511,8 +524,9 @@ const fetchVoiceOptions = async () => {
   }
 }
 
-// 组件挂载时获取语音选项
-onMounted(() => {
+// 组件挂载时获取语音选项和用户凭据信息
+onMounted(async () => {
   fetchVoiceOptions()
+  await fetchUserCredentials()
 })
 </script>

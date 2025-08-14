@@ -142,7 +142,10 @@ def list_wordpress_sites():
         "id": site.id,
         "site_name": site.site_name,
         "site_url": site.site_url,
-        "username": site.username
+        "username": site.username,
+        "wp_tag": site.wp_tag,
+        "wp_footer": site.wp_footer
+        # 不返回敏感字段api_key
     } for site in sites]), 200
 
 @auth_bp.route('/wordpress', methods=['POST'])
@@ -172,6 +175,8 @@ def add_wordpress_site():
             site_url=data['site_url'],
             username=data['username'],
             api_key=data['api_key'],
+            wp_tag=data.get('wp_tag'),
+            wp_footer=data.get('wp_footer'),
             user_id=user.id
         )
         db.session.add(site)
@@ -208,6 +213,10 @@ def update_wordpress_site(site_id):
             site.username = data['username']
         if 'api_key' in data:
             site.api_key = data['api_key']
+        if 'wp_tag' in data:
+            site.wp_tag = data['wp_tag']
+        if 'wp_footer' in data:
+            site.wp_footer = data['wp_footer']
             
         db.session.commit()
         return jsonify({"success": True}), 200
@@ -260,7 +269,9 @@ def list_wechat_accounts():
         "id": account.id,
         "account_name": account.account_name,
         "account_id": account.account_id,
-        "app_id": account.app_id
+        "app_id": account.app_id,
+        "wx_footer": account.wx_footer
+        # 不返回敏感字段app_secret
     } for account in accounts]), 200
 
 @auth_bp.route('/wechat', methods=['POST'])
@@ -271,7 +282,7 @@ def add_wechat_account():
     user = User.query.filter_by(username=current_user).first()
     data = request.get_json()
 
-    required_fields = ['account_name', 'app_id', 'app_secret']
+    required_fields = ['account_name', 'account_id', 'app_id', 'app_secret']
     if not all(field in data for field in required_fields):
         return jsonify({"error": "缺少必要字段"}), 400
 
@@ -287,8 +298,10 @@ def add_wechat_account():
     try:
         account = WechatAccount(
             account_name=data['account_name'],
+            account_id=data['account_id'],
             app_id=data['app_id'],
-            app_secret=data['app_secret'],
+            app_secret=data['app_secret'],  # 敏感字段，确保传输过程中使用HTTPS
+            wx_footer=data.get('wx_footer'),
             user_id=user.id
         )
         db.session.add(account)
@@ -319,10 +332,14 @@ def update_wechat_account(account_id):
         # 更新公众号信息
         if 'account_name' in data:
             account.account_name = data['account_name']
+        if 'account_id' in data:
+            account.account_id = data['account_id']
         if 'app_id' in data:
             account.app_id = data['app_id']
         if 'app_secret' in data:
-            account.app_secret = data['app_secret']
+            account.app_secret = data['app_secret']  # 敏感字段，确保传输过程中使用HTTPS
+        if 'wx_footer' in data:
+            account.wx_footer = data['wx_footer']
             
         db.session.commit()
         return jsonify({"success": True}), 200

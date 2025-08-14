@@ -79,6 +79,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import VideoCard from '@/components/VideoCard.vue'
 import Modal from '@/components/Modal.vue'
+import api from '@/services/api.js'
 
 // 状态
 const loading = ref(false)
@@ -91,55 +92,42 @@ const videoToDelete = ref(null)
 // 路由
 const router = useRouter()
 
-// 模拟视频数据
-const mockVideos = [
-  {
-    id: 1,
-    title: '产品介绍视频',
-    description: '这是一个展示我们最新产品的视频',
-    thumbnail: 'https://picsum.photos/seed/p1/400/225',
-    duration: 120,
-    status: 'published',
-    createdAt: '2023-05-15'
-  },
-  {
-    id: 2,
-    title: '教程视频',
-    description: '如何使用我们的软件功能',
-    thumbnail: 'https://picsum.photos/seed/p2/400/225',
-    duration: 300,
-    status: 'processing',
-    createdAt: '2023-05-16'
-  },
-  {
-    id: 3,
-    title: '客户见证',
-    description: '听听我们的客户怎么说',
-    thumbnail: 'https://picsum.photos/seed/p3/400/225',
-    duration: 180,
-    status: 'draft',
-    createdAt: '2023-05-17'
-  },
-  {
-    id: 4,
-    title: '活动回顾',
-    description: '公司年度活动精彩瞬间',
-    thumbnail: 'https://picsum.photos/seed/p4/400/225',
-    duration: 240,
-    status: 'published',
-    createdAt: '2023-05-18'
-  }
-]
-
 // 获取视频
-const fetchVideos = () => {
+const fetchVideos = async () => {
   loading.value = true
   
-  // 模拟API调用
-  setTimeout(() => {
-    videos.value = mockVideos
+  try {
+    const response = await api.get('/videos')
+    // 转换后端数据格式以匹配前端组件的期望
+    videos.value = response.data.map(video => ({
+      id: video.id,
+      title: video.title,
+      description: video.description,
+      thumbnail: video.thumbnail_path || 'https://picsum.photos/seed/default/400/225',
+      // 后端没有返回duration字段，暂时设置为0
+      duration: 0,
+      // 后端返回的是created_at而不是createdAt，且是ISO格式
+      createdAt: video.created_at,
+      // 后端没有返回status字段，暂时设置为published
+      status: 'published'
+    }))
+  } catch (error) {
+    console.error('获取视频失败:', error)
+    // 出错时使用模拟数据
+    videos.value = [
+      {
+        id: 1,
+        title: '产品介绍视频',
+        description: '这是一个展示我们最新产品的视频',
+        thumbnail: 'https://picsum.photos/seed/p1/400/225',
+        duration: 120,
+        status: 'published',
+        createdAt: '2023-05-15'
+      }
+    ]
+  } finally {
     loading.value = false
-  }, 1000)
+  }
 }
 
 // 过滤后的视频
@@ -170,11 +158,19 @@ const requestDeleteVideo = (video) => {
 }
 
 // 确认删除视频
-const confirmDeleteVideo = () => {
+const confirmDeleteVideo = async () => {
   if (videoToDelete.value) {
-    videos.value = videos.value.filter(v => v.id !== videoToDelete.value.id)
-    console.log('删除视频:', videoToDelete.value)
-    videoToDelete.value = null
+    try {
+      await api.delete(`/video/${videoToDelete.value.id}`)
+      // 删除成功后更新本地列表
+      videos.value = videos.value.filter(v => v.id !== videoToDelete.value.id)
+      console.log('删除视频:', videoToDelete.value)
+    } catch (error) {
+      console.error('删除视频失败:', error)
+      alert('删除视频失败，请重试')
+    } finally {
+      videoToDelete.value = null
+    }
   }
   showDeleteModal.value = false
 }

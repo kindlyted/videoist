@@ -32,7 +32,12 @@
                 <div class="flex justify-between items-start">
                   <div>
                     <h3 class="font-medium text-gray-900">{{ account.name }}</h3>
-                    <p class="text-sm text-gray-500 mt-1">{{ account.type === 'official' ? '公众号' : '视频号' }}</p>
+                    <p class="text-sm text-gray-500 mt-1">Account ID: {{ account.accountId }}</p>
+                    <p class="text-sm text-gray-500 mt-1">App ID: {{ account.appId }}</p>
+                    <div class="text-sm text-gray-500 mt-1">
+                      <p class="font-medium">Footer:</p>
+                      <div class="border border-gray-300 rounded p-2 mt-1 bg-white" v-html="account.wxFooter"></div>
+                    </div>
                   </div>
                   <div class="flex space-x-2">
                     <button 
@@ -51,19 +56,7 @@
                     </button>
                   </div>
                 </div>
-                <div class="mt-3 flex items-center text-sm text-gray-500">
-                  <span>状态: </span>
-                  <span 
-                    :class="[
-                      'ml-1 px-2 py-1 rounded-full text-xs',
-                      account.status === 'connected' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    ]"
-                  >
-                    {{ account.status === 'connected' ? '已连接' : '未连接' }}
-                  </span>
-                </div>
+                <!-- 移除了状态显示部分 -->
               </div>
             </div>
             <div v-else class="text-center py-8 text-gray-500">
@@ -151,17 +144,7 @@
             required
           >
         </div>
-        <div class="mb-4">
-          <label class="form-label">账号类型</label>
-          <select 
-            v-model="accountForm.type" 
-            class="form-select w-full"
-            required
-          >
-            <option value="official">公众号</option>
-            <option value="channels">视频号</option>
-          </select>
-        </div>
+        
         <div class="mb-4">
           <label class="form-label">AppID</label>
           <input 
@@ -172,14 +155,31 @@
           >
         </div>
         <div class="mb-4">
-          <label class="form-label">AppSecret</label>
-          <input 
-            v-model="accountForm.appSecret" 
-            type="password" 
-            class="form-input w-full" 
-            required
-          >
-        </div>
+            <label class="form-label">Account ID</label>
+            <input 
+              v-model="accountForm.accountId" 
+              type="text" 
+              class="form-input w-full" 
+              required
+            >
+          </div>
+          <div class="mb-4">
+            <label class="form-label">AppSecret</label>
+            <input 
+              v-model="accountForm.appSecret" 
+              type="password" 
+              class="form-input w-full" 
+              required
+            >
+          </div>
+          <div class="mb-4">
+            <label class="form-label">WX Footer</label>
+            <textarea 
+              v-model="accountForm.wxFooter" 
+              class="form-input w-full" 
+              rows="3"
+            ></textarea>
+          </div>
       </form>
     </Modal>
     
@@ -219,9 +219,10 @@ const accountToDelete = ref(null)
 const accountForm = ref({
   id: null,
   name: '',
-  type: 'official',
+  accountId: '',
   appId: '',
-  appSecret: ''
+  appSecret: '',
+  wxFooter: ''
 })
 
 // 计算属性
@@ -255,9 +256,10 @@ const fetchAccounts = async () => {
     accounts.value = response.data.map(account => ({
       id: account.id,
       name: account.account_name,
-      type: 'official', // 后端API未返回类型，暂时默认为公众号
+      accountId: account.account_id || '',
       appId: account.app_id,
       appSecret: '', // 出于安全考虑，不返回appSecret
+      wxFooter: account.wx_footer || '',
       status: 'connected' // 假设所有从后端获取的账号都是已连接状态
     }))
   } catch (error) {
@@ -289,8 +291,10 @@ const addAccount = async () => {
   try {
     const response = await api.post('/wechat', {
       account_name: accountForm.value.name,
+      account_id: accountForm.value.accountId,
       app_id: accountForm.value.appId,
-      app_secret: accountForm.value.appSecret
+      app_secret: accountForm.value.appSecret,
+      wx_footer: accountForm.value.wxFooter
     })
     
     // 添加成功后重新获取账号列表
@@ -307,8 +311,10 @@ const updateAccount = async () => {
   try {
     await api.put(`/wechat/${accountForm.value.id}`, {
       account_name: accountForm.value.name,
+      account_id: accountForm.value.accountId,
       app_id: accountForm.value.appId,
-      app_secret: accountForm.value.appSecret
+      app_secret: accountForm.value.appSecret,
+      wx_footer: accountForm.value.wxFooter
     })
     
     // 更新成功后重新获取账号列表
@@ -341,9 +347,10 @@ const editAccount = (account) => {
   accountForm.value = { 
     id: account.id, 
     name: account.name, 
-    type: account.type, 
+    accountId: account.accountId || '',
     appId: account.appId, 
-    appSecret: '' 
+    appSecret: '',
+    wxFooter: account.wxFooter || ''
   }
 }
 

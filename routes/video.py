@@ -1,4 +1,5 @@
 # routes/video.py
+# {"国际教育": 7}是个mock 要修改
 
 import os
 import json
@@ -8,7 +9,7 @@ from pathlib import Path
 from flask import Blueprint, request, jsonify, send_file, url_for
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from config import Config
-
+from models import db, Video, WordPressSite, WechatAccount, User
 # 创建蓝图
 video_bp = Blueprint('video', __name__)
 from services.video.video_core import (
@@ -18,15 +19,14 @@ from services.video.video_core import (
     create_video_multi,
     create_video_single,  # Linux
     creating_cover,
-    generating_byds,
     extractting,
     basic_auth_token,
-    generating_jskb,
     process_markdown_images,
     posting,
     markdown_to_html,
     convert_webp_to_jpg
 )
+from services.common.utils import generating_byds, generating_jskb
 from services.video.post_video import dy_video_upload, sph_video_upload, xhs_video_upload
 from services.video.publisher_core import WeChatPublisher
 from services.video.db_utils import get_db_credentials
@@ -103,15 +103,20 @@ def post_article():
         wp_creds = get_db_credentials('wordpress')
         wechat_creds = get_db_credentials('wechat')
         
+        # 调试信息
+        print(f"wp_creds type: {type(wp_creds)}, value: {wp_creds}")
+        print(f"wechat_creds type: {type(wechat_creds)}, value: {wechat_creds}")
+        
         # 检查凭据完整性
         wp_creds_valid = all([wp_creds.get('url'), wp_creds.get('username'), wp_creds.get('password')])
         wechat_creds_valid = all([wechat_creds.get('app_id'), wechat_creds.get('app_secret')])
         
-        # 如果凭据为空，强制关闭对应功能
-        # if not wp_creds_valid:
-        #     wordpress_switch = 'off'
-        # if not wechat_creds_valid:
-        #     wechat_switch = 'off'
+        # 如果凭据不完整，强制关闭对应功能开关
+        if not wp_creds_valid:
+            wordpress_switch = 'off'  # 强制关闭WordPress发布功能
+        if not wechat_creds_valid:
+            wechat_switch = 'off'      # 强制关闭微信公众号发布功能
+        
         if wordpress_switch != 'on' and wechat_switch != 'on':
         
             return jsonify({
@@ -132,18 +137,29 @@ def post_article():
         USERNAME = wp_creds.get('username', '')
         APPLICATION_PASSWORD = wp_creds.get('password', '')
         
-        # 标签映射
-        tag_index = {
-            "国际教育": 7,
-            "定居指南": 49,
-            "移民资讯": 8,
-            "楼市新闻": 2,
-            "房产": 46,
-            "教育": 47,
-            "海外": 45,
-            "留学": 64,
-            "移民": 48
-        }
+        # 从数据库获取标签映射
+
+        tag_site = WordPressSite.query.filter_by(is_active=True).first()
+        # 确保tag_index是字典格式
+        if tag_site and tag_site.wp_tag:
+            # 如果wp_tag是字符串，尝试解析为JSON
+            if isinstance(tag_site.wp_tag, str):
+                try:
+                    tag_index = json.loads(tag_site.wp_tag)
+                except json.JSONDecodeError:
+                    # 如果解析失败，使用默认值
+                    tag_index = {"国际教育": 7}
+            else:
+                # 如果已经是字典格式，直接使用
+                tag_index = tag_site.wp_tag
+        else:
+            # 如果没有找到或为空，使用默认值
+            tag_index = {"国际教育": 7}
+        print(tag_index)
+
+        # 从数据库获取SEO页脚
+        seo_footer_site = WordPressSite.query.filter_by(is_active=True).first()
+        SEO_FOOTER = seo_footer_site.wp_footer if seo_footer_site and seo_footer_site.wp_footer else ""
         
         token = basic_auth_token(USERNAME, APPLICATION_PASSWORD)
         
@@ -157,9 +173,6 @@ def post_article():
             "tags": []
         }
         
-        # 读取HTML文件
-        with open(Config.HTML_DIR / "seo_footer_wx.html", "r", encoding="utf-8") as f:
-            SEO_FOOTER = f.read()
         
         # 保存material到JSON文件
         with open(Config.ARTICLE_DIR / f"{working_dir}/{working_dir}.json", "w", encoding="utf-8") as f:
@@ -276,16 +289,20 @@ def generate_video():
             create_video_single(srt_file, audio_filename, output_filename, Config.SCREEN_SIZE, title_txt)
         
         # 保存视频记录到数据库
-        # current_user_id = get_jwt_identity()
-        # video = Video(
-        #     title=title_txt,
-        #     description=input_text[:200],  # 取前200个字符作为描述
-        #     file_path=f'/video/static/output/outputs/{base_filename}.mp4',
-        #     thumbnail_path=f'/video/static/output/outputs/{base_filename}.png',
-        #     author_id=current_user_id
-        # )
-        # db.session.add(video)
-        # db.session.commit()
+        current_username = get_jwt_identity()
+        user = User.query.filter_by(username=current_username).first()
+        if not user:
+            return jsonify({'success': False, 'message': '用户不存在'}), 404
+        
+        video = Video(
+            title=title_txt,
+            description=input_text[:200],  # 取前200个字符作为描述
+            file_path=url_for('storage_files', filename=f'output/outputs/{base_filename}.mp4'),
+            thumbnail_path=url_for('storage_files', filename=f'output/outputs/{base_filename}.png'),
+            user_id=user.id
+        )
+        db.session.add(video)
+        db.session.commit()
         
         return jsonify({
             'success': True,
@@ -397,4 +414,53 @@ def get_voice_options():
         'voice_names': Config.VOICE_NAMES,
         'default_voice': Config.DEFAULT_VOICE
     })
+
+@video_bp.route('/platform-stats', methods=['GET'])
+@jwt_required()
+def get_platform_stats():
+    """获取平台统计数据（WordPress站点数量和微信公众号数量）"""""
+    try:
+        # 获取当前用户名
+        current_username = get_jwt_identity()
+        
+        # 根据用户名查询用户ID
+        user = User.query.filter_by(username=current_username).first()
+        if not user:
+            return jsonify({'error': '用户不存在'}), 404
+        
+        # 使用用户ID查询WordPress站点和微信公众号数量
+        wordpress_count = WordPressSite.query.filter_by(user_id=user.id, is_active=True).count()
+        
+        # 获取当前用户微信公众号数量
+        wechat_count = WechatAccount.query.filter_by(user_id=user.id, is_active=True).count()
+
+        
+        return jsonify({
+            'wordpress_sites_count': wordpress_count,
+            'wechat_accounts_count': wechat_count
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取平台统计数据时出错: {str(e)}'}), 500
+
+@video_bp.route('/video-stats', methods=['GET'])
+@jwt_required()
+def get_video_stats():
+    """获取视频统计数据（视频总数）"""
+    try:
+        # 获取当前用户名
+        current_username = get_jwt_identity()
+        
+        # 根据用户名查询用户ID
+        user = User.query.filter_by(username=current_username).first()
+        if not user:
+            return jsonify({'error': '用户不存在'}), 404
+        
+        # 使用用户ID查询视频数量
+        video_count = Video.query.filter_by(user_id=user.id).count()
+        
+        return jsonify({
+            'video_count': video_count
+        })
+    except Exception as e:
+        return jsonify({'error': f'获取视频统计数据时出错: {str(e)}'}), 500
 

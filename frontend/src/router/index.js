@@ -85,7 +85,7 @@ router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
   
   // 需要登录的路由
-  const protectedRoutes = ['/video-creation', '/notes']
+  const protectedRoutes = ['/video-creation', '/notes', '/dashboard', '/settings', '/wordpress', '/wechat', '/videos', '/video/:id']
   
   // 如果用户未认证但有token，尝试恢复用户状态
   if (!userStore.isAuthenticated) {
