@@ -47,4 +47,7 @@ NOTE.txt
 start.ps1
 main/services/testqwentts.py
 TODO.md
-
+check_db_data.py 
+fix_video_user_id.py 
+old.md 
+vue3.md
