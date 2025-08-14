@@ -11,6 +11,7 @@ import VideoPreviewView from '@/views/VideoPreviewView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import NotesView from '@/views/NotesView.vue'
+import BreakpointTestView from '@/views/BreakpointTestView.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = createRouter({
@@ -76,6 +77,11 @@ const router = createRouter({
       path: '/notes',
       name: 'notes',
       component: NotesView
+    },
+    {
+      path: '/breakpoint-test',
+      name: 'breakpoint-test',
+      component: BreakpointTestView
     }
   ]
 })
