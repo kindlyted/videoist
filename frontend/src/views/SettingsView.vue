@@ -85,6 +85,9 @@
       <!-- 密码设置 -->
       <div v-if="activeTab === 'password'" class="p-6">
         <h2 class="text-xl font-semibold mb-4">密码设置</h2>
+        <div v-if="passwordMessage" class="mb-4 p-2 rounded" :class="passwordMessageType === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'">
+          {{ passwordMessage }}
+        </div>
         <form @submit.prevent="updatePassword">
           <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="currentPassword">
@@ -129,8 +132,9 @@
             <button
               class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
               type="submit"
+              :disabled="passwordLoading"
             >
-              更新密码
+              {{ passwordLoading ? '更新中...' : '更新密码' }}
             </button>
           </div>
         </form>
@@ -285,6 +289,11 @@ const privacySettings = ref({
   allowComments: true
 })
 
+// 密码更新状态
+const passwordLoading = ref(false)
+const passwordMessage = ref('')
+const passwordMessageType = ref('') // 'success' or 'error'
+
 // 选项卡
 const tabs = [
   { id: 'account', name: '账户' },
@@ -300,21 +309,44 @@ const updateAccount = () => {
   alert('账户信息已更新')
 }
 
-const updatePassword = () => {
+const updatePassword = async () => {
+  // 重置消息
+  passwordMessage.value = ''
+  passwordMessageType.value = ''
+  
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
-    alert('新密码和确认密码不匹配')
+    passwordMessage.value = '新密码和确认密码不匹配'
+    passwordMessageType.value = 'error'
     return
   }
   
-  // 这里应该调用API更新密码
-  console.log('更新密码:', passwordForm.value)
-  alert('密码已更新')
+  passwordLoading.value = true
   
-  // 重置表单
-  passwordForm.value = {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
+  try {
+    const { success, message, error } = await userStore.updatePassword({
+      current_password: passwordForm.value.currentPassword,
+      new_password: passwordForm.value.newPassword
+    })
+    
+    if (success) {
+      passwordMessage.value = message || '密码更新成功'
+      passwordMessageType.value = 'success'
+      
+      // 重置表单
+      passwordForm.value = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }
+    } else {
+      passwordMessage.value = error || '密码更新失败'
+      passwordMessageType.value = 'error'
+    }
+  } catch (err) {
+    passwordMessage.value = '发生未知错误'
+    passwordMessageType.value = 'error'
+  } finally {
+    passwordLoading.value = false
   }
 }
 

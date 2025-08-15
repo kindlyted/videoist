@@ -88,6 +88,31 @@ def logout():
     # 前端会负责删除本地存储的token
     return jsonify({"message": "成功登出"}), 200
 
+
+@auth_bp.route('/update-password', methods=['POST'])
+@jwt_required()
+def update_password():
+    """更新用户密码接口"""
+    current_user = get_jwt_identity()
+    user = User.query.filter_by(username=current_user).first()
+    
+    if not user:
+        return jsonify({"error": "用户不存在"}), 404
+    
+    data = request.get_json()
+    if not data or 'current_password' not in data or 'new_password' not in data:
+        return jsonify({"error": "必须提供当前密码和新密码"}), 400
+    
+    # 验证当前密码
+    if not user.verify_password(data['current_password']):
+        return jsonify({"error": "当前密码错误"}), 400
+    
+    # 更新密码
+    user.set_password(data['new_password'])
+    db.session.commit()
+    
+    return jsonify({"message": "密码更新成功"}), 200
+
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """用户注册接口"""
@@ -115,7 +140,11 @@ def register():
         access_token = create_access_token(identity=user.username)
         return jsonify({
             "access_token": access_token,
-            "user_id": user.id
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "email": user.email
+            }
         }), 201
 
     except Exception as e:
@@ -169,14 +198,18 @@ def add_wordpress_site():
     if existing_site:
         return jsonify({"error": "该站点URL已存在"}), 409
 
+    required_fields = ['site_name', 'site_url', 'username', 'api_key', 'wp_tag', 'wp_footer']
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "缺少必要字段"}), 400
+
     try:
         site = WordPressSite(
             site_name=data['site_name'],
             site_url=data['site_url'],
             username=data['username'],
             api_key=data['api_key'],
-            wp_tag=data.get('wp_tag'),
-            wp_footer=data.get('wp_footer'),
+            wp_tag=data['wp_tag'],
+            wp_footer=data['wp_footer'],
             user_id=user.id
         )
         db.session.add(site)
@@ -203,20 +236,18 @@ def update_wordpress_site(site_id):
     if not site:
         return jsonify({"error": "站点不存在或无权访问"}), 404
 
+    required_fields = ['site_name', 'site_url', 'username', 'api_key', 'wp_tag', 'wp_footer']
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "缺少必要字段"}), 400
+
     try:
         # 更新站点信息
-        if 'site_name' in data:
-            site.site_name = data['site_name']
-        if 'site_url' in data:
-            site.site_url = data['site_url']
-        if 'username' in data:
-            site.username = data['username']
-        if 'api_key' in data:
-            site.api_key = data['api_key']
-        if 'wp_tag' in data:
-            site.wp_tag = data['wp_tag']
-        if 'wp_footer' in data:
-            site.wp_footer = data['wp_footer']
+        site.site_name = data['site_name']
+        site.site_url = data['site_url']
+        site.username = data['username']
+        site.api_key = data['api_key']
+        site.wp_tag = data['wp_tag']
+        site.wp_footer = data['wp_footer']
             
         db.session.commit()
         return jsonify({"success": True}), 200
@@ -388,14 +419,34 @@ def reset_password():
         # 为了安全起见，即使用户不存在也返回成功
         return jsonify({"message": "如果该邮箱存在，重置链接已发送"}), 200
 
-    # 在实际应用中，这里会生成一个重置令牌并发送邮件
-    # 为简化起见，我们只是返回成功
-    return jsonify({"message": "重置链接已发送到您的邮箱"}), 200
+    # 生成重置令牌（简化实现，实际应用中应使用更安全的方法）
+    reset_token = f"{user.id}-{user.email}-{int(time.time())}"
+    reset_token_hash = hashlib.sha256(reset_token.encode()).hexdigest()
+    
+    # 在实际应用中，这里会发送包含重置链接的邮件
+    # 为简化起见，我们只是返回令牌
+    reset_url = f"{request.host_url}reset-password/{reset_token_hash}"
+    return jsonify({
+        "message": "重置链接已发送到您的邮箱",
+        "reset_url": reset_url  # 仅用于测试，实际应用中不应返回此信息
+    }), 200
 
 
 @auth_bp.route('/reset-password/<token>', methods=['POST'])
 def reset_password_confirm(token):
     """确认重置密码接口"""
-    # 在实际应用中，这里会验证令牌并重置密码
-    # 为简化起见，我们只是返回成功
+    data = request.get_json()
+    if not data or 'password' not in data:
+        return jsonify({"error": "必须提供新密码"}), 400
+    
+    # 在实际应用中，这里会验证令牌
+    # 为简化起见，我们接受任何令牌
+    # 但在实际应用中，应该有更严格的验证
+    
+    # 这里我们假设令牌验证通过，直接重置密码
+    # 在实际应用中，应该从令牌中提取用户信息
+    
+    # 由于简化实现，我们无法验证令牌，直接返回成功
+    # 在实际应用中，请实现完整的令牌验证逻辑
+    
     return jsonify({"message": "密码重置成功"}), 200

@@ -10,6 +10,7 @@ import VideoListView from '@/views/VideoListView.vue'
 import VideoPreviewView from '@/views/VideoPreviewView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import ResetPasswordView from '@/views/ResetPasswordView.vue'
+import ResetPasswordConfirmView from '@/views/ResetPasswordConfirmView.vue'
 import NotesView from '@/views/NotesView.vue'
 import BreakpointTestView from '@/views/BreakpointTestView.vue'
 import { useUserStore } from '@/stores/user'
@@ -72,6 +73,12 @@ const router = createRouter({
       path: '/reset-password',
       name: 'reset-password',
       component: ResetPasswordView
+    },
+    {
+      path: '/reset-password/:token',
+      name: 'reset-password-confirm',
+      component: ResetPasswordConfirmView,
+      props: true
     },
     {
       path: '/notes',

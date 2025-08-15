@@ -15,7 +15,7 @@
           <div class="card-header flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
             <h2 class="card-title">WordPress 站点</h2>
             <button 
-              @click="showAddSiteModal = true"
+              @click="openAddSiteModal"
               class="btn btn-primary flex items-center"
             >
               <PlusIcon class="h-5 w-5 mr-2" />
@@ -166,6 +166,7 @@
               v-model="siteForm.wpTag" 
               type="text" 
               class="form-input w-full"
+              required
             >
           </div>
           <div class="mb-4">
@@ -174,6 +175,7 @@
               v-model="siteForm.wpFooter" 
               class="form-input w-full" 
               rows="3"
+              required
             ></textarea>
           </div>
       </form>
@@ -281,6 +283,13 @@ const fetchSites = async () => {
 
 // 添加 WordPress 站点
 const addSite = async () => {
+  // 前端必填字段验证
+  if (!siteForm.value.name || !siteForm.value.url || !siteForm.value.username || 
+      !siteForm.value.apiKey || !siteForm.value.wpTag || !siteForm.value.wpFooter) {
+    alert('所有字段都是必填的')
+    return
+  }
+  
   try {
     const response = await api.post('/wordpress', {
       site_name: siteForm.value.name,
@@ -302,6 +311,13 @@ const addSite = async () => {
 
 // 更新 WordPress 站点
 const updateSite = async () => {
+  // 前端必填字段验证
+  if (!siteForm.value.name || !siteForm.value.url || !siteForm.value.username || 
+      !siteForm.value.apiKey || !siteForm.value.wpTag || !siteForm.value.wpFooter) {
+    alert('所有字段都是必填的')
+    return
+  }
+  
   try {
     await api.put(`/wordpress/${siteForm.value.id}`, {
       site_name: siteForm.value.name,
@@ -337,8 +353,6 @@ const deleteSite = async () => {
 }
 
 const editSite = (site) => {
-  showAddSiteModal.value = true
-  showEditSiteModal.value = true
   siteForm.value = { 
     id: site.id, 
     name: site.name, 
@@ -348,6 +362,8 @@ const editSite = (site) => {
     wpTag: site.wpTag || '',
     wpFooter: site.wpFooter || ''
   }
+  showEditSiteModal.value = true
+  showAddSiteModal.value = true
 }
 
 const saveSite = async () => {
@@ -373,6 +389,26 @@ const confirmDeleteSite = async () => {
 
 const closeModal = () => {
   showAddSiteModal.value = false
+  showEditSiteModal.value = false
+  // 重置表单
+  resetForm()
+}
+
+const resetForm = () => {
+  siteForm.value = {
+    id: null,
+    name: '',
+    url: '',
+    username: '',
+    apiKey: '',
+    wpTag: '',
+    wpFooter: ''
+  }
+}
+
+const openAddSiteModal = () => {
+  resetForm()
+  showAddSiteModal.value = true
   showEditSiteModal.value = false
 }
 

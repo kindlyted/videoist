@@ -172,7 +172,7 @@ const navigationItems = [
 const userNavigationItems = computed(() => [
   { name: '仪表板', path: '/dashboard' },
   { name: '设置', path: '/settings' },
-  { name: user.value ? '退出登录' : '登录', path: '#' }
+  { name: userStore.isAuthenticated ? '退出登录' : '登录', path: '#' }
 ])
 
 // 方法
@@ -191,9 +191,9 @@ const isCurrentRoute = (path) => {
 
 // 处理用户导航项点击
 const handleUserNavigationClick = (item) => {
-  if (item.name === '退出登录' && user.value) {
+  if (item.name === '退出登录' && userStore.isAuthenticated) {
     handleLogout()
-  } else if (item.name === '登录' && !user.value) {
+  } else if (item.name === '登录' && !userStore.isAuthenticated) {
     router.push('/login')
   }
 }

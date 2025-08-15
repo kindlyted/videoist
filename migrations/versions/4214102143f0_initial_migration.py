@@ -1,8 +1,8 @@
-"""empty message
+"""initial migration
 
-Revision ID: 57a314a67c73
-Revises: 6946f1772137
-Create Date: 2025-08-11 10:47:50.888946
+Revision ID: 4214102143f0
+Revises: 
+Create Date: 2025-08-15 11:48:37.019583
 
 """
 from alembic import op
@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '57a314a67c73'
-down_revision = '6946f1772137'
+revision = '4214102143f0'
+down_revision = None
 branch_labels = None
 depends_on = None
 
@@ -75,12 +75,6 @@ def upgrade():
     sa.Column('thumbnail_path', sa.String(length=500), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.Column('wordpress_post_id', sa.Integer(), nullable=True),
-    sa.Column('wordpress_post_url', sa.String(length=500), nullable=True),
-    sa.Column('published_to_wordpress', sa.Boolean(), nullable=True),
-    sa.Column('wordpress_published_at', sa.DateTime(), nullable=True),
-    sa.Column('published_to_wechat', sa.Boolean(), nullable=True),
-    sa.Column('wechat_published_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -91,6 +85,7 @@ def upgrade():
     sa.Column('account_id', sa.String(length=100), nullable=False),
     sa.Column('app_id', sa.String(length=100), nullable=False),
     sa.Column('app_secret', sa.String(length=255), nullable=False),
+    sa.Column('wx_footer', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
@@ -109,6 +104,8 @@ def upgrade():
     sa.Column('site_url', sa.String(length=255), nullable=False),
     sa.Column('username', sa.String(length=100), nullable=False),
     sa.Column('api_key', sa.String(length=255), nullable=False),
+    sa.Column('wp_tag', sa.JSON(), nullable=True),
+    sa.Column('wp_footer', sa.Text(), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),

@@ -39,8 +39,8 @@ export const useUserStore = defineStore('user', {
     
     async register(userData) {
       try {
-        const response = await api.post('/auth/register', userData)
-        const { user, access_token } = response.data
+        const response = await api.post('/register', userData)
+        const { access_token, user } = response.data
         
         this.user = user
         this.token = access_token
@@ -51,7 +51,7 @@ export const useUserStore = defineStore('user', {
         
         return { success: true }
       } catch (error) {
-        return { success: false, error: error.response?.data?.message || '注册失败' }
+        return { success: false, error: error.response?.data?.error || '注册失败' }
       }
     },
     
@@ -91,10 +91,23 @@ export const useUserStore = defineStore('user', {
     
     async resetPassword(email) {
       try {
-        const response = await api.post('/auth/reset-password', { email })
-        return { success: true, message: response.data.message }
+        const response = await api.post('/reset-password', { email })
+        return { 
+          success: true, 
+          message: response.data.message,
+          resetUrl: response.data.reset_url  // 仅用于测试
+        }
       } catch (error) {
         return { success: false, error: error.response?.data?.error || '重置密码请求失败' }
+      }
+    },
+    
+    async updatePassword(passwordData) {
+      try {
+        const response = await api.post('/update-password', passwordData)
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        return { success: false, error: error.response?.data?.error || '密码更新失败' }
       }
     }
   }

@@ -56,11 +56,16 @@ const loading = ref(false)
 const handleResetPassword = async () => {
   loading.value = true
   
-  const { success, message, error } = await userStore.resetPassword(form.value.email)
+  const { success, message, error, resetUrl } = await userStore.resetPassword(form.value.email)
   
   if (success) {
-    // 显示成功信息
+    // 显示成功信息和重置链接
     alert(message || '重置链接已发送到您的邮箱')
+    
+    // 如果有重置链接（仅用于测试），显示它
+    if (resetUrl) {
+      alert(`重置链接（仅用于测试）: ${resetUrl}`)
+    }
     
     // 跳转到登录页面
     router.push('/login')
