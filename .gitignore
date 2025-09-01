@@ -1,0 +1,65 @@
+# Environment
+.env
+venv/
+
+# Python compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask specific
+instance/
+migrations/*.py[cod]
+
+# Static files
+# Allow static files to be uploaded to repository
+
+# Ignore storage directory contents but keep directory structure
+storage/*/*
+!storage/*/
+
+# Build and distribution
+videoist_flask.egg-info/
+build/
+dist/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmp/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Project specific
+start.ps1
+main/services/testqwentts.py
+TODO.md
+check_db_data.py 
+fix_video_user_id.py 
+actv.ps1
+clear_cookies.py
+architecture_optimization.md
+extracting_optimization.md
+pdf_extraction_optimization.md
+PDF提取优化指南.md
+Qwen文档处理能力详解.md
+services/note/semantic_pdf_extractor.py
+tests/__init__.py
+tests/test_video_core.py
+scripts/deploy.bat
+scripts/deploy.sh
+scripts/run_tests.sh
+prompt_modification_suggestions.md
+test_prompt.py
