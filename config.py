@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
+# 加载环境变量
+load_dotenv()
 
 class Config:
     # ==================== 基础配置 ====================
