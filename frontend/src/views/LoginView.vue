@@ -87,19 +87,26 @@ const loading = ref(false)
 const handleLogin = async () => {
   loading.value = true
   
-  const { success, error } = await userStore.login({
-    username: form.value.username,
-    password: form.value.password
-  })
-  
-  loading.value = false
-  
-  if (success) {
-    // 登录成功，跳转到首页
-    router.push('/')
-  } else {
-    // 显示错误信息
-    alert(error || $t('login.loginFailed'))
+  try {
+    const { success, error } = await userStore.login({
+      username: form.value.username,
+      password: form.value.password
+    })
+    
+    loading.value = false
+    
+    if (success) {
+      // 登录成功，跳转到首页
+      router.push('/')
+    } else {
+      // 显示错误信息
+      const errorMessage = error === 'login.loginFailed' ? t('login.loginFailed') : error
+      alert(errorMessage || t('login.loginFailed'))
+    }
+  } catch (err) {
+    loading.value = false
+    // 处理网络错误等异常情况
+    alert(t('login.loginFailed'))
   }
 }
 </script>

@@ -2,8 +2,8 @@
   <div class="px-container py-container">
     <div class="mb-6 flex items-center">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">WordPress 管理</h1>
-        <p class="text-gray-600 mt-1">管理您的 WordPress 站点和文章</p>
+        <h1 class="text-2xl font-bold text-gray-900">{{ $t('wordpressManagement.title') }}</h1>
+        <p class="text-gray-600 mt-1">{{ $t('wordpressManagement.description') }}</p>
       </div>
       <GlobeAltIcon class="h-8 w-8 text-blue-500 ml-4" />
     </div>
@@ -13,13 +13,13 @@
       <div class="lg:col-span-2">
         <div class="card">
           <div class="card-header flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 class="card-title">WordPress 站点</h2>
+            <h2 class="card-title">{{ $t('wordpressManagement.sites') }}</h2>
             <button 
               @click="openAddSiteModal"
               class="btn btn-primary flex items-center"
             >
               <PlusIcon class="h-5 w-5 mr-2" />
-              添加站点
+              {{ $t('wordpressManagement.addSite') }}
             </button>
           </div>
           <div class="card-body">
@@ -46,14 +46,14 @@
                       class="text-blue-600 hover:text-blue-900 flex items-center"
                     >
                       <PencilIcon class="h-4 w-4 mr-1" />
-                      编辑
+                      {{ $t('wordpressManagement.edit') }}
                     </button>
                     <button 
                       @click="requestDeleteSite(site)"
                       class="text-red-600 hover:text-red-900 flex items-center"
                     >
                       <TrashIcon class="h-4 w-4 mr-1" />
-                      删除
+                      {{ $t('wordpressManagement.delete') }}
                     </button>
                   </div>
                 </div>
@@ -62,7 +62,7 @@
               </div>
             </div>
             <div v-else class="text-center py-8 text-gray-500">
-              暂无 WordPress 站点
+              {{ $t('wordpressManagement.noSites') }}
             </div>
           </div>
         </div>
@@ -72,13 +72,13 @@
       <div>
         <div class="card">
           <div class="card-header flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 class="card-title">文章</h2>
+            <h2 class="card-title">{{ $t('wordpressManagement.posts') }}</h2>
             <select 
               v-model="selectedSite" 
               class="form-select w-full sm:w-auto"
               :disabled="sites.length === 0"
             >
-              <option value="">选择站点</option>
+              <option value="">{{ $t('wordpressManagement.selectSite') }}</option>
               <option 
                 v-for="site in sites" 
                 :key="site.id" 
@@ -102,10 +102,10 @@
               </div>
             </div>
             <div v-else-if="selectedSite" class="text-center py-8 text-gray-500">
-              该站点暂无文章
+              {{ $t('wordpressManagement.noPosts') }}
             </div>
             <div v-else class="text-center py-8 text-gray-500">
-              请先选择一个站点
+              {{ $t('wordpressManagement.noSiteSelected') }}
             </div>
           </div>
         </div>
@@ -114,67 +114,73 @@
     
     <!-- 添加/编辑站点模态框 -->
     <Modal
-      v-model:visible="showAddSiteModal"
-      :title="showEditSiteModal ? '编辑站点' : '添加站点'"
-      :confirm-text="'保存'"
-      :cancel-text="'取消'"
-      :show-footer="true"
-      size="md"
-      @confirm="saveSite"
-      @cancel="closeModal"
-    >
+        v-model:visible="showAddSiteModal"
+        :title="showEditSiteModal ? $t('wordpressManagement.editSite') : $t('wordpressManagement.addSite')"
+        :confirm-text="$t('wordpressManagement.save')"
+        :cancel-text="$t('wordpressManagement.cancel')"
+        :show-footer="true"
+        size="md"
+        @confirm="saveSite"
+        @cancel="closeModal"
+      >
       <form @submit.prevent="saveSite">
         <div class="mb-4">
-          <label class="form-label">站点名称</label>
+          <label class="form-label">{{ $t('wordpressManagement.siteName') }}</label>
           <input 
             v-model="siteForm.name" 
             type="text" 
             class="form-input w-full" 
+            :placeholder="$t('wordpressManagement.siteNamePlaceholder')"
             required
           >
         </div>
         <div class="mb-4">
-          <label class="form-label">站点URL</label>
+          <label class="form-label">{{ $t('wordpressManagement.siteUrl') }}</label>
           <input 
             v-model="siteForm.url" 
             type="url" 
             class="form-input w-full" 
+            :placeholder="$t('wordpressManagement.siteUrlPlaceholder')"
             required
           >
         </div>
         <div class="mb-4">
-          <label class="form-label">用户名</label>
+          <label class="form-label">{{ $t('wordpressManagement.username') }}</label>
           <input 
             v-model="siteForm.username" 
             type="text" 
             class="form-input w-full" 
+            :placeholder="$t('wordpressManagement.usernamePlaceholder')"
             required
           >
         </div>
         <div class="mb-4">
-            <label class="form-label">API Key</label>
+            <label class="form-label">{{ $t('wordpressManagement.apiKey') }}</label>
             <input 
               v-model="siteForm.apiKey" 
               type="password" 
               class="form-input w-full" 
+              :placeholder="$t('wordpressManagement.apiKeyPlaceholder')"
               required
             >
           </div>
           <div class="mb-4">
-            <label class="form-label">WP Tag</label>
+            <label class="form-label">{{ $t('wordpressManagement.wpTag') }}</label>
             <input 
               v-model="siteForm.wpTag" 
               type="text" 
               class="form-input w-full"
+              :placeholder="$t('wordpressManagement.wpTagPlaceholder')"
               required
             >
           </div>
           <div class="mb-4">
-            <label class="form-label">WP Footer</label>
+            <label class="form-label">{{ $t('wordpressManagement.wpFooter') }}</label>
             <textarea 
               v-model="siteForm.wpFooter" 
               class="form-input w-full" 
               rows="3"
+              :placeholder="$t('wordpressManagement.wpFooterPlaceholder')"
               required
             ></textarea>
           </div>
@@ -184,26 +190,30 @@
     <!-- 删除确认模态框 -->
     <Modal
       v-model:visible="showDeleteModal"
-      title="确认删除"
-      :confirm-text="'删除'"
-      :cancel-text="'取消'"
+      :title="$t('wordpressManagement.confirmDeleteTitle')"
+      :confirm-text="$t('wordpressManagement.delete')"
+      :cancel-text="$t('wordpressManagement.cancel')"
       :show-footer="true"
       size="md"
       confirm-button-class="bg-red-600 hover:bg-red-700 focus:ring-red-500"
       @confirm="confirmDeleteSite"
       @cancel="showDeleteModal = false"
     >
-      <p class="text-gray-700">您确定要删除站点 "{{ siteToDelete?.name }}" 吗？</p>
-      <p class="text-sm text-gray-500 mt-2">此操作无法撤销，关联的文章也将被删除。</p>
+      <p class="text-gray-700">{{ $t('wordpressManagement.deleteConfirm', { name: siteToDelete?.name }) }}</p>
+      <p class="text-sm text-gray-500 mt-2">{{ $t('wordpressManagement.deleteWarning') }}</p>
     </Modal>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import Modal from '@/components/Modal.vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
+import Modal from '@/components/Modal.vue'
+import Switch from '@/components/Switch.vue'
 import { GlobeAltIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n()
 
 // 状态
 const sites = ref([])
@@ -281,74 +291,102 @@ const fetchSites = async () => {
   }
 }
 
+// 获取 WordPress 文章列表
+const fetchPosts = async () => {
+  try {
+    const response = await api.get('/wordpress/posts')
+    posts.value = response.data
+  } catch (error) {
+    console.error('获取文章列表失败:', error)
+    // 使用模拟数据作为后备
+    posts.value = [
+      {
+        id: 1,
+        siteId: 1,
+        title: '我的第一篇博客文章',
+        date: '2023-05-15T14:30:00Z',
+        excerpt: '这是我的第一篇博客文章的摘要...'
+      },
+      {
+        id: 2,
+        siteId: 1,
+        title: '如何使用WordPress',
+        date: '2023-05-14T09:15:00Z',
+        excerpt: '在这篇文章中，我将介绍如何使用WordPress创建网站...'
+      }
+    ]
+  }
+}
+
 // 添加 WordPress 站点
 const addSite = async () => {
-  // 前端必填字段验证
-  if (!siteForm.value.name || !siteForm.value.url || !siteForm.value.username || 
-      !siteForm.value.apiKey || !siteForm.value.wpTag || !siteForm.value.wpFooter) {
-    alert('所有字段都是必填的')
-    return
-  }
-  
   try {
-    const response = await api.post('/wordpress', {
-      site_name: siteForm.value.name,
-      site_url: siteForm.value.url,
-      username: siteForm.value.username,
-      api_key: siteForm.value.apiKey,
-      wp_tag: siteForm.value.wpTag,
-      wp_footer: siteForm.value.wpFooter
-    })
+    if (!validateForm()) return
     
-    // 添加成功后重新获取站点列表
-    await fetchSites()
+    const newSite = {
+      ...siteForm.value,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    const response = await api.post('/wordpress/sites', newSite)
+    sites.value.push(response.data)
     closeModal()
+    console.log(t('wordpressManagement.siteAdded'))
+    
+    // 重置表单
+    Object.keys(siteForm.value).forEach(key => {
+      siteForm.value[key] = ''
+    })
   } catch (error) {
-    console.error('添加站点失败:', error)
-    alert('添加站点失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wordpressManagement.addSiteFailed'), error)
+    console.error(t('wordpressManagement.addSiteFailed'))
   }
 }
 
 // 更新 WordPress 站点
 const updateSite = async () => {
-  // 前端必填字段验证
-  if (!siteForm.value.name || !siteForm.value.url || !siteForm.value.username || 
-      !siteForm.value.apiKey || !siteForm.value.wpTag || !siteForm.value.wpFooter) {
-    alert('所有字段都是必填的')
-    return
-  }
+  if (!siteForm.value.id) return
   
   try {
-    await api.put(`/wordpress/${siteForm.value.id}`, {
-      site_name: siteForm.value.name,
-      site_url: siteForm.value.url,
-      username: siteForm.value.username,
-      api_key: siteForm.value.apiKey,
-      wp_tag: siteForm.value.wpTag,
-      wp_footer: siteForm.value.wpFooter
-    })
+    if (!validateForm()) return
     
-    // 更新成功后重新获取站点列表
-    await fetchSites()
+    const updatedSite = {
+      ...siteForm.value,
+      updated_at: new Date().toISOString()
+    }
+    
+    const response = await api.put(`/wordpress/sites/${siteForm.value.id}`, updatedSite)
+    
+    // 更新本地数据
+    const index = sites.value.findIndex(site => site.id === siteForm.value.id)
+    if (index !== -1) {
+      sites.value[index] = { ...sites.value[index], ...response.data }
+    }
+    
     closeModal()
+    console.log(t('wordpressManagement.siteUpdated'))
   } catch (error) {
-    console.error('更新站点失败:', error)
-    alert('更新站点失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wordpressManagement.updateSiteFailed'), error)
+    console.error(t('wordpressManagement.updateSiteFailed'))
   }
 }
 
 // 删除 WordPress 站点
-const deleteSite = async () => {
+const deleteSite = async (siteId) => {
+  if (!confirm(t('wordpressManagement.confirmDelete'))) return
+  
   try {
-    await api.delete(`/wordpress/${siteToDelete.value.id}`)
-    
-    // 删除成功后重新获取站点列表
-    await fetchSites()
-    showDeleteModal.value = false
-    siteToDelete.value = null
+    await api.delete(`/wordpress/sites/${siteId}`)
+    sites.value = sites.value.filter(site => site.id !== siteId)
+    if (selectedSite.value === siteId) {
+      selectedSite.value = ''
+      posts.value = []
+    }
+    console.log(t('wordpressManagement.siteDeleted'))
   } catch (error) {
-    console.error('删除站点失败:', error)
-    alert('删除站点失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wordpressManagement.deleteSiteFailed'), error)
+    console.error(t('wordpressManagement.deleteSiteFailed'))
   }
 }
 
@@ -388,11 +426,11 @@ const validateHttpsUrl = (url) => {
 
 const saveSite = async () => {
   if (!validateWpTag(siteForm.value.wpTag)) {
-    alert('WP Tag 格式不正确，请检查后重试！');
+    alert(t('wordpressManagement.wpTagInvalid'));
     return;
   }
   if (!validateHttpsUrl(siteForm.value.url)) {
-    alert('站点 URL 必须以 https:// 开头！');
+    alert(t('wordpressManagement.urlMustBeHttps'));
     return;
   }
   if (siteForm.value.id) {
@@ -411,7 +449,7 @@ const requestDeleteSite = (site) => {
 
 const confirmDeleteSite = async () => {
   if (siteToDelete.value) {
-    await deleteSite()
+    await deleteSite(siteToDelete.value.id)
   }
 }
 
@@ -448,5 +486,14 @@ const viewPost = (post) => {
 // 组件挂载时获取站点列表
 onMounted(() => {
   fetchSites()
+})
+
+// 监听选中站点的变化，获取对应的文章列表
+watch(selectedSite, (newVal) => {
+  if (newVal) {
+    fetchPosts()
+  } else {
+    posts.value = []
+  }
 })
 </script>

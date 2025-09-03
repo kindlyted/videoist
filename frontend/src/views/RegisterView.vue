@@ -105,7 +105,7 @@ watch(
 const handleRegister = async () => {
   // 简单的密码确认验证
   if (form.value.password !== form.value.password2) {
-    alert($t('register.passwordMismatch'))
+    alert(t('register.passwordMismatch'))
     return
   }
   

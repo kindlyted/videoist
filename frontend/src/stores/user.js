@@ -34,8 +34,8 @@ export const useUserStore = defineStore('user', {
         
         return { success: true }
       } catch (error) {
-        const { t } = useI18n()
-        return { success: false, error: error.response?.data?.message || t('login.loginFailed') }
+        // 返回错误信息，让调用者处理i18n
+        return { success: false, error: error.response?.data?.message || 'login.loginFailed' }
       }
     },
     
@@ -53,8 +53,7 @@ export const useUserStore = defineStore('user', {
         
         return { success: true }
       } catch (error) {
-        const { t } = useI18n()
-        return { success: false, error: error.response?.data?.error || t('register.registrationFailed') }
+        return { success: false, error: error.response?.data?.error || 'register.registrationFailed' }
       }
     },
     
@@ -88,8 +87,7 @@ export const useUserStore = defineStore('user', {
         // 清除localStorage中的token
         localStorage.removeItem('access_token')
         
-        const { t } = useI18n()
-        return { success: false, error: error.response?.data?.message || t('user.fetchUserInfoFailed') }
+        return { success: false, error: error.response?.data?.message || 'user.fetchUserInfoFailed' }
       }
     },
     
@@ -102,8 +100,7 @@ export const useUserStore = defineStore('user', {
           resetUrl: response.data.reset_url  // 仅用于测试
         }
       } catch (error) {
-        const { t } = useI18n()
-        return { success: false, error: error.response?.data?.error || t('user.resetPasswordFailed') }
+        return { success: false, error: error.response?.data?.error || 'user.resetPasswordFailed' }
       }
     },
     
@@ -112,8 +109,7 @@ export const useUserStore = defineStore('user', {
         const response = await api.post('/update-password', passwordData)
         return { success: true, message: response.data.message }
       } catch (error) {
-        const { t } = useI18n()
-        return { success: false, error: error.response?.data?.error || t('user.updatePasswordFailed') }
+        return { success: false, error: error.response?.data?.error || 'user.updatePasswordFailed' }
       }
     }
   }

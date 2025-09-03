@@ -2,8 +2,8 @@
   <div class="px-container py-container">
     <div class="mb-6 flex items-center">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">微信管理</h1>
-        <p class="text-gray-600 mt-1">管理您的微信账号和发布内容</p>
+        <h1 class="text-2xl font-bold text-gray-900">{{ $t('wechatManagement.title') }}</h1>
+        <p class="text-gray-600 mt-1">{{ $t('wechatManagement.description') }}</p>
       </div>
       <ChatBubbleLeftRightIcon class="h-8 w-8 text-green-500 ml-4" />
     </div>
@@ -13,13 +13,13 @@
       <div class="lg:col-span-2">
         <div class="card">
           <div class="card-header flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 class="card-title">微信账号</h2>
+            <h2 class="card-title">{{ $t('wechatManagement.accounts') }}</h2>
             <button 
               @click="showAddAccountModal = true"
               class="btn btn-primary flex items-center"
             >
               <PlusIcon class="h-5 w-5 mr-2" />
-              添加账号
+              {{ $t('wechatManagement.addAccount') }}
             </button>
           </div>
           <div class="card-body">
@@ -32,8 +32,8 @@
                 <div class="flex justify-between items-start">
                   <div>
                     <h3 class="font-medium text-gray-900">{{ account.name }}</h3>
-                    <p class="text-sm text-gray-500 mt-1">Account ID: {{ account.accountId }}</p>
-                    <p class="text-sm text-gray-500 mt-1">App ID: {{ account.appId }}</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ $t('wechatManagement.accountIdLabel') }}: {{ account.accountId }}</p>
+                  <p class="text-sm text-gray-500 mt-1">{{ $t('wechatManagement.appIdLabel') }}: {{ account.appId }}</p>
                     <div class="text-sm text-gray-500 mt-1">
                       <p class="font-medium">Footer:</p>
                       <div class="border border-gray-300 rounded p-2 mt-1 bg-white" v-html="account.wxFooter"></div>
@@ -45,14 +45,14 @@
                       class="text-blue-600 hover:text-blue-900 flex items-center"
                     >
                       <PencilIcon class="h-4 w-4 mr-1" />
-                      编辑
+                      {{ $t('wechatManagement.edit') }}
                     </button>
                     <button 
                       @click="requestDeleteAccount(account)"
                       class="text-red-600 hover:text-red-900 flex items-center"
                     >
                       <TrashIcon class="h-4 w-4 mr-1" />
-                      删除
+                      {{ $t('wechatManagement.delete') }}
                     </button>
                   </div>
                 </div>
@@ -60,7 +60,7 @@
               </div>
             </div>
             <div v-else class="text-center py-8 text-gray-500">
-              暂无微信账号
+              {{ $t('wechatManagement.noAccounts') }}
             </div>
           </div>
         </div>
@@ -70,13 +70,13 @@
       <div>
         <div class="card">
           <div class="card-header flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-            <h2 class="card-title">内容</h2>
+            <h2 class="card-title">{{ $t('wechatManagement.content') }}</h2>
             <select 
               v-model="selectedAccount" 
               class="form-select w-full sm:w-auto"
               :disabled="accounts.length === 0"
             >
-              <option value="">选择账号</option>
+              <option value="">{{ $t('wechatManagement.selectAccount') }}</option>
               <option 
                 v-for="account in accounts" 
                 :key="account.id" 
@@ -113,10 +113,10 @@
               </div>
             </div>
             <div v-else-if="selectedAccount" class="text-center py-8 text-gray-500">
-              该账号暂无内容
+              {{ $t('wechatManagement.noContent') }}
             </div>
             <div v-else class="text-center py-8 text-gray-500">
-              请先选择一个账号
+              {{ $t('wechatManagement.noAccountSelected') }}
             </div>
           </div>
         </div>
@@ -125,58 +125,63 @@
     
     <!-- 添加/编辑账号模态框 -->
     <Modal
-      v-model:visible="showAddAccountModal"
-      :title="showEditAccountModal ? '编辑账号' : '添加账号'"
-      :confirm-text="'保存'"
-      :cancel-text="'取消'"
-      :show-footer="true"
-      size="md"
-      @confirm="saveAccount"
-      @cancel="closeModal"
-    >
+        v-model:visible="showAddAccountModal"
+        :title="showEditAccountModal ? $t('wechatManagement.editAccount') : $t('wechatManagement.addAccount')"
+        :confirm-text="showEditAccountModal ? $t('wechatManagement.update') : $t('wechatManagement.add')"
+        :cancel-text="$t('wechatManagement.cancel')"
+        :show-footer="true"
+        size="md"
+        @confirm="saveAccount"
+        @cancel="closeModal"
+      >
       <form @submit.prevent="saveAccount">
         <div class="mb-4">
-          <label class="form-label">账号名称</label>
+          <label class="form-label">{{ $t('wechatManagement.accountName') }}</label>
           <input 
             v-model="accountForm.name" 
             type="text" 
             class="form-input w-full" 
+            :placeholder="$t('wechatManagement.accountNamePlaceholder')"
             required
           >
         </div>
         
         <div class="mb-4">
-          <label class="form-label">AppID</label>
+          <label class="form-label">{{ $t('wechatManagement.appId') }}</label>
           <input 
             v-model="accountForm.appId" 
             type="text" 
             class="form-input w-full" 
+            :placeholder="$t('wechatManagement.appIdPlaceholder')"
             required
           >
         </div>
         <div class="mb-4">
-            <label class="form-label">Account ID</label>
+            <label class="form-label">{{ $t('wechatManagement.accountId') }}</label>
             <input 
               v-model="accountForm.accountId" 
               type="text" 
               class="form-input w-full" 
+              :placeholder="$t('wechatManagement.accountIdPlaceholder')"
               required
             >
           </div>
           <div class="mb-4">
-            <label class="form-label">AppSecret</label>
+            <label class="form-label">{{ $t('wechatManagement.appSecret') }}</label>
             <input 
               v-model="accountForm.appSecret" 
               type="password" 
               class="form-input w-full" 
+              :placeholder="$t('wechatManagement.appSecretPlaceholder')"
               required
             >
           </div>
           <div class="mb-4">
-            <label class="form-label">WX Footer</label>
+            <label class="form-label">{{ $t('wechatManagement.wxFooter') }}</label>
             <textarea 
               v-model="accountForm.wxFooter" 
               class="form-input w-full" 
+              :placeholder="$t('wechatManagement.wxFooterPlaceholder')"
               rows="3"
             ></textarea>
           </div>
@@ -186,26 +191,29 @@
     <!-- 删除确认模态框 -->
     <Modal
       v-model:visible="showDeleteModal"
-      title="确认删除"
-      :confirm-text="'删除'"
-      :cancel-text="'取消'"
+      :title="$t('wechatManagement.confirmDeleteTitle')"
+      :confirm-text="$t('wechatManagement.delete')"
+      :cancel-text="$t('wechatManagement.cancel')"
       :show-footer="true"
       size="md"
       confirm-button-class="bg-red-600 hover:bg-red-700 focus:ring-red-500"
       @confirm="confirmDeleteAccount"
       @cancel="showDeleteModal = false"
     >
-      <p class="text-gray-700">您确定要删除账号 "{{ accountToDelete?.name }}" 吗？</p>
-      <p class="text-sm text-gray-500 mt-2">此操作无法撤销，关联的内容也将被删除。</p>
+      <p class="text-gray-700">{{ $t('wechatManagement.deleteConfirm', { name: accountToDelete?.name }) }}</p>
+      <p class="text-sm text-gray-500 mt-2">{{ $t('wechatManagement.deleteWarning') }}</p>
     </Modal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Modal from '@/components/Modal.vue'
 import api from '@/services/api'
 import { ChatBubbleLeftRightIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+
+const { t } = useI18n()
 
 // 状态
 const accounts = ref([])
@@ -225,6 +233,15 @@ const accountForm = ref({
   wxFooter: ''
 })
 
+// 验证表单
+const validateForm = () => {
+  if (!accountForm.value.name || !accountForm.value.appId || !accountForm.value.accountId || !accountForm.value.appSecret || !accountForm.value.wxFooter) {
+    alert(t('wechatManagement.allFieldsRequired'))
+    return false
+  }
+  return true
+}
+
 // 计算属性
 const filteredContent = computed(() => {
   if (!selectedAccount.value) return []
@@ -242,11 +259,11 @@ const formatDate = (dateString) => {
 
 const getContentStatusText = (status) => {
   const statusMap = {
-    published: '已发布',
-    draft: '草稿',
-    scheduled: '定时发布'
+    published: t('wechatManagement.contentStatus.published'),
+    draft: t('wechatManagement.contentStatus.draft'),
+    scheduled: t('wechatManagement.contentStatus.scheduled')
   }
-  return statusMap[status] || '未知'
+  return statusMap[status] || t('unknown')
 }
 
 // 获取微信账号列表
@@ -289,55 +306,68 @@ const fetchAccounts = async () => {
 // 添加微信账号
 const addAccount = async () => {
   try {
-    const response = await api.post('/wechat', {
-      account_name: accountForm.value.name,
-      account_id: accountForm.value.accountId,
-      app_id: accountForm.value.appId,
-      app_secret: accountForm.value.appSecret,
-      wx_footer: accountForm.value.wxFooter
-    })
+    if (!validateForm()) return
     
-    // 添加成功后重新获取账号列表
-    await fetchAccounts()
+    const newAccount = {
+      ...accountForm.value,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    const response = await api.post('/wechat/accounts', newAccount)
+    accounts.value.push(response.data)
     closeModal()
+    alert(t('wechatManagement.accountAdded'))
+    
+    // 重置表单
+    Object.keys(accountForm.value).forEach(key => {
+      accountForm.value[key] = ''
+    })
   } catch (error) {
-    console.error('添加账号失败:', error)
-    alert('添加账号失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wechatManagement.addAccountFailed'), error)
+    alert(t('wechatManagement.addAccountFailed') + (error.response?.data?.error || '未知错误'))
   }
 }
 
 // 更新微信账号
 const updateAccount = async () => {
   try {
-    await api.put(`/wechat/${accountForm.value.id}`, {
-      account_name: accountForm.value.name,
-      account_id: accountForm.value.accountId,
-      app_id: accountForm.value.appId,
-      app_secret: accountForm.value.appSecret,
-      wx_footer: accountForm.value.wxFooter
-    })
+    if (!validateForm()) return
     
-    // 更新成功后重新获取账号列表
-    await fetchAccounts()
+    const updatedAccount = {
+      ...accountForm.value,
+      updated_at: new Date().toISOString()
+    }
+    
+    const response = await api.put(`/wechat/accounts/${accountForm.value.id}`, updatedAccount)
+    
+    // 更新本地数据
+    const index = accounts.value.findIndex(account => account.id === accountForm.value.id)
+    if (index !== -1) {
+      accounts.value[index] = { ...accounts.value[index], ...response.data }
+    }
+    
     closeModal()
+    alert(t('wechatManagement.accountUpdated'))
   } catch (error) {
-    console.error('更新账号失败:', error)
-    alert('更新账号失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wechatManagement.updateAccountFailed'), error)
+    alert(t('wechatManagement.updateAccountFailed') + (error.response?.data?.error || '未知错误'))
   }
 }
 
 // 删除微信账号
 const deleteAccount = async () => {
   try {
-    await api.delete(`/wechat/${accountToDelete.value.id}`)
+    await api.delete(`/wechat/accounts/${accountToDelete.value.id}`)
     
     // 删除成功后重新获取账号列表
     await fetchAccounts()
     showDeleteModal.value = false
     accountToDelete.value = null
+    alert(t('wechatManagement.accountDeleted'))
   } catch (error) {
-    console.error('删除账号失败:', error)
-    alert('删除账号失败: ' + (error.response?.data?.error || '未知错误'))
+    console.error(t('wechatManagement.deleteAccountFailed'), error)
+    alert(t('wechatManagement.deleteAccountFailed') + (error.response?.data?.error || '未知错误'))
   }
 }
 
