@@ -97,7 +97,7 @@
       <!-- 结果显示区域 -->
       <div id="urlResults" class="mt-4 p-4 bg-gray-50 rounded" v-if="urlResults">
         <h3 class="font-semibold mb-2">{{ $t('videoCreation.processResults') }}</h3>
-        <p><span class="font-medium">{{ $t('videoCreation.articleUrl') }}:</span> <span id="websiteUrl">{{ urlResults.url }}</span></p>
+        <p><span class="font-medium">{{ $t('videoCreation.wpsiteStatus') }}:</span> <span id="websiteUrl">{{ urlResults.url }}</span></p>
         <p><span class="font-medium">{{ $t('videoCreation.workingDir') }}:</span> <span id="workingDir">{{ urlResults.workDir }}</span></p>
         <p><span class="font-medium">{{ $t('videoCreation.wechatStatus') }}:</span> <span id="wxStatus">{{ urlResults.wxStatus }}</span></p>
       </div>

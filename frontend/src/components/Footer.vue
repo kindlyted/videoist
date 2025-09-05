@@ -16,8 +16,9 @@
               v-for="item in footerLinks" 
               :key="item.name"
               :href="item.url" 
-              class="text-gray-500 hover:text-gray-700 text-sm"
+              class="text-gray-500 hover:text-gray-700 text-sm flex items-center"
             >
+              <img v-if="item.key === 'footer.sourceCode'" src="/icons/github.svg" alt="GitHub" class="mr-1 w-4 h-4" />
               {{ $t(item.key) }}
             </a>
           </nav>
@@ -38,6 +39,7 @@ const footerLinks = ref([
   { name: '关于我们', url: '#', key: 'footer.about' },
   { name: '隐私政策', url: '#', key: 'footer.privacy' },
   { name: '使用条款', url: '#', key: 'footer.terms' },
-  { name: '联系我们', url: '#', key: 'footer.contact' }
+  { name: '联系我们', url: '#', key: 'footer.contact' },
+  { name: '源代码', url: 'https://github.com/kindlyted/videoist', key: 'footer.sourceCode' }
 ])
 </script>

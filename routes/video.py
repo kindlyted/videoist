@@ -143,7 +143,7 @@ def post_article():
                 content_text = url
         
         if not content_text:
-            return jsonify(create_error_response(ErrorCode.CONTENT_EMPTY)), 400
+            return jsonify(create_error_response(ErrorCode.FILE_PROCESSING_ERROR)), 400
         
         # 生成结构化内容
         results = {}
@@ -336,7 +336,7 @@ def post_article():
             
             wx_result = publisher.publish()
     except Exception as e:
-        return jsonify(create_error_response(ErrorCode.URL_PROCESSING_ERROR, str(e))), 500
+        return jsonify(create_error_response(ErrorCode.FILE_PROCESSING_ERROR, str(e))), 500
     
     wx_result_msg = ""
     if wx_result:

@@ -37,7 +37,8 @@
     "about": "About Us",
     "privacy": "Privacy Policy",
     "terms": "Terms of Use",
-    "contact": "Contact Us"
+    "contact": "Contact Us",
+    "sourceCode": "Source Code"
   },
   "home": {
     "welcome": "Welcome to Videoist!",
@@ -199,6 +200,7 @@
     "processResults": "Processing Results",
     "workingDir": "Working Directory",
     "wechatStatus": "WeChat Status",
+    "wpsiteStatus": "Website Status",
     "videoContentEdit": "Editing Script",
     "recitationScript": "Braodcast Script",
     "scriptPlaceholder": "Please enter or paste text here",

@@ -2,11 +2,34 @@ import os
 from pathlib import Path
 from openai import OpenAI
 
-# gpt part 生成正文，postist_core.py里也有，但后缀不同表示api不同
+def get_error_message(error_code, language='zh'):
+    """
+    根据错误代码和语言获取相应的错误信息
+    """
+    from services.common.error_codes import ERROR_MESSAGES_ZH, ERROR_MESSAGES_EN
+    
+    if language == 'en':
+        return ERROR_MESSAGES_EN.get(error_code, 'Unknown error')
+    else:
+        return ERROR_MESSAGES_ZH.get(error_code, '未知错误')
+
+def create_error_response(error_code, language='zh'):
+    """
+    创建错误响应
+    """
+    return {'error': get_error_message(error_code, language)}
+
+def create_success_response(message_code, language='zh'):
+    """
+    创建成功响应
+    """
+    return {'message': get_error_message(message_code, language)}
+
+# Deepseek大模型调用
 def generating_byds(content, prompt_path):
     client = OpenAI(
-        api_key=os.getenv('API_KEY_DS'),
-        base_url=os.getenv('URL_DS'), 
+        api_key=os.getenv('API_KEY'),
+        base_url=os.getenv('BASE_URL'), 
     )
     # 定义提示词
     with open(prompt_path, 'r', encoding='utf-8') as file:
@@ -31,33 +54,7 @@ def generating_byds(content, prompt_path):
     print("DeepSeek大模型工作中，请稍等片刻")
     return answer
 
-
-def get_error_message(error_code, language='zh'):
-    """
-    根据错误代码和语言获取相应的错误信息
-    """
-    from services.common.error_codes import ERROR_MESSAGES_ZH, ERROR_MESSAGES_EN
-    
-    if language == 'en':
-        return ERROR_MESSAGES_EN.get(error_code, 'Unknown error')
-    else:
-        return ERROR_MESSAGES_ZH.get(error_code, '未知错误')
-
-
-def create_error_response(error_code, language='zh'):
-    """
-    创建错误响应
-    """
-    return {'error': get_error_message(error_code, language)}
-
-
-def create_success_response(message_code, language='zh'):
-    """
-    创建成功响应
-    """
-    return {'message': get_error_message(message_code, language)}
-
-# gpt part 生成正文，postist_core.py里也有，但后缀不同表示api不同
+# Kimi大模型调用
 def generating_bykm(content, prompt_path):
     client = OpenAI(
         api_key=os.getenv('API_KEY_KIMI'),
@@ -86,11 +83,11 @@ def generating_bykm(content, prompt_path):
     print("Moonshot大模型工作中，请稍等片刻")
     return answer
 
-# gpt part 生成正文
+# Deepseek大模型json格式输出
 def generating_jskb(content, prompt_path):
     client = OpenAI(
-        api_key=os.getenv('API_KEY_DS'),
-        base_url=os.getenv('URL_DS'), 
+        api_key=os.getenv('API_KEY'),
+        base_url=os.getenv('BASE_URL'), 
     )
     # 定义提示词
     with open(prompt_path, 'r', encoding='utf-8') as file:
@@ -115,7 +112,7 @@ def generating_jskb(content, prompt_path):
     print("DeepSeek大模型工作中，请稍等片刻")
     return answer
 
-# gpt part 生成正文
+# Kimi大模型调用
 def invoke_with_attachment_kimi(file_path, prompt_path, user_input, MODEL_NAME="kimi-k2-0711-preview"):
     client = OpenAI(
         api_key=os.getenv('API_KEY_KIMI'),
@@ -158,6 +155,7 @@ def invoke_with_attachment_kimi(file_path, prompt_path, user_input, MODEL_NAME="
     
     return answer
 
+# Qwen大模型调用
 def invoke_with_attachment_qwen(file_path, prompt_path, user_input, MODEL_NAME="qwen-long"):
     client = OpenAI(
         api_key=os.getenv('API_KEY_QWEN'),
