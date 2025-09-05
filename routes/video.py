@@ -35,6 +35,8 @@ from services.common.utils import generating_byds, generating_jskb
 from services.video.post_video import dy_video_upload, sph_video_upload, xhs_video_upload
 from services.video.publisher_core import WeChatPublisher
 from services.video.db_utils import get_db_credentials
+from services.common.error_codes import ErrorCode
+from services.common.utils import get_error_message, create_error_response, create_success_response
 
 # 创建蓝图
 video_bp = Blueprint('video', __name__)
@@ -75,7 +77,7 @@ def get_platform_stats():
         # 根据用户名查询用户ID
         user = User.query.filter_by(username=current_username).first()
         if not user:
-            return jsonify({'error': '用户不存在'}), 404
+            return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
         
         # 使用用户ID查询WordPress站点和微信公众号数量
         wordpress_count = WordPressSite.query.filter_by(user_id=user.id, is_active=True).count()
@@ -96,7 +98,7 @@ def generate_title():
     data = request.get_json()
     input_text = data.get('text', '')
     if not input_text:
-        return jsonify({'error': '请输入台词'}), 400
+        return jsonify(create_error_response(ErrorCode.INPUT_TEXT_MISSING)), 400
     
     try:
         title_txt = generating_byds(input_text, str(Config.PROMPT_DIR / "top_title.prompt"))[:12]
@@ -107,7 +109,7 @@ def generate_title():
             'cover': cover_txt
         })
     except Exception as e:
-        return jsonify({'error': f'生成标题时出错: {str(e)}'}), 500
+        return jsonify(create_error_response(ErrorCode.TITLE_GENERATION_ERROR, str(e))), 500
 
 @video_bp.route('/post-article', methods=['POST'])
 @jwt_required()
@@ -120,27 +122,28 @@ def post_article():
     wechat_switch = data.get('wechat_switch', 'off')
     
 
-    # 更全面的URL验证
-    if not url:
-        return jsonify({'error': 'URL不能为空'}), 400
-    
-    if not (url.startswith("http://") or url.startswith("https://")):
-        return jsonify({'error': '无效的URL'}), 400
-    
-    # 验证URL格式
-    try:
-        from urllib.parse import urlparse
-        parsed_url = urlparse(url)
-        if not parsed_url.netloc:
-            return jsonify({'error': '无效的URL格式'}), 400
-    except Exception:
-        return jsonify({'error': '无效的URL格式'}), 400
-    
     try:
         # 提取内容
-        content_text = extractting(url)
+        # 更全面的URL验证
+        if not url:
+            return jsonify(create_error_response(ErrorCode.URL_MISSING)), 400
+        
+        if not (url.startswith("http://") or url.startswith("https://")):
+            content_text = url
+        else:
+            # 验证URL格式
+            try:
+                from urllib.parse import urlparse
+                parsed_url = urlparse(url)
+                if not parsed_url.netloc:
+                    content_text = url
+                else:
+                    content_text = extractting(url)
+            except Exception:
+                content_text = url
+        
         if not content_text:
-            return jsonify({'error': '内容为空'}), 400
+            return jsonify(create_error_response(ErrorCode.CONTENT_EMPTY)), 400
         
         # 生成结构化内容
         results = {}
@@ -333,13 +336,21 @@ def post_article():
             
             wx_result = publisher.publish()
     except Exception as e:
-        return jsonify({'error': f'处理URL时出错: {str(e)}'}), 500
+        return jsonify(create_error_response(ErrorCode.URL_PROCESSING_ERROR, str(e))), 500
+    
+    wx_result_msg = ""
+    if wx_result:
+        wx_result_msg = get_error_message(ErrorCode.WECHAT_PUBLISH_SUCCESS)
+    elif wx_result is None:
+        wx_result_msg = get_error_message(ErrorCode.WECHAT_PUBLISH_SKIPPED)
+    else:
+        wx_result_msg = get_error_message(ErrorCode.WECHAT_PUBLISH_FAILED)
     
     return jsonify({
-        'website_url': post["link"] if post else "WordPress发布已跳过",
+        'website_url': post["link"] if post else get_error_message(ErrorCode.WORDPRESS_PUBLISH_SKIPPED),
         'article_text': audioscript,
         'working_dir': working_dir,
-        'wx_result': "公众号发布成功" if wx_result else ("公众号发布已跳过" if wx_result is None else "公众号发布失败")
+        'wx_result': wx_result_msg
     })
 
 @video_bp.route('/generate-video', methods=['POST'])
@@ -356,7 +367,10 @@ def generate_video():
     "喇cici": "zh-CN-XiaoxiaoNeural"
     }
     if not cover_txt:
-        return jsonify({'error': '请补充封面描述'}), 400
+        return jsonify(create_error_response(ErrorCode.COVER_DESCRIPTION_MISSING)), 400
+    
+    if not input_text:
+        return jsonify(create_error_response(ErrorCode.INPUT_TEXT_MISSING)), 400
     
     try:
         # 获取当前日期
@@ -402,7 +416,7 @@ def generate_video():
         current_username = get_jwt_identity()
         user = User.query.filter_by(username=current_username).first()
         if not user:
-            return jsonify({'success': False, 'message': '用户不存在'}), 404
+            return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
         
         video = Video(
             title=title_txt,
@@ -416,14 +430,15 @@ def generate_video():
         
         return jsonify({
             'success': True,
-            'message': '视频生成成功',
+            'message': get_error_message(ErrorCode.VIDEO_GENERATION_SUCCESS),
             'cover_path': url_for('storage_files', filename=f'output/outputs/{base_filename}.png'),
             'video_path': url_for('storage_files', filename=f'output/outputs/{base_filename}.mp4')
         })
     except Exception as e:
+        error_message = f'{get_error_message(ErrorCode.VIDEO_GENERATION_ERROR)}: {str(e)}'
         return jsonify({
             'success': False,
-            'message': f'生成视频时出错: {str(e)}'
+            'message': error_message
         }), 500
 
 # 获取用户视频列表
@@ -459,14 +474,14 @@ def get_video_detail(video_id):
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
         
     # 获取视频信息
     video = Video.query.get_or_404(video_id)
     
     # 检查视频是否属于当前用户
     if video.user_id != user.id:
-        return jsonify({'error': '无权访问此视频'}), 403
+        return jsonify(create_error_response(ErrorCode.VIDEO_ACCESS_DENIED)), 403
     
     # 返回视频详细信息
     return jsonify({
@@ -490,20 +505,20 @@ def delete_video(video_id):
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
         
     # 获取视频信息
     video = Video.query.get_or_404(video_id)
     
     # 检查视频是否属于当前用户
     if video.user_id != user.id:
-        return jsonify({'error': '无权删除此视频'}), 403
+        return jsonify(create_error_response(ErrorCode.VIDEO_DELETE_DENIED)), 403
     
     # 删除视频
     db.session.delete(video)
     db.session.commit()
     
-    return jsonify({'message': '视频删除成功'})
+    return jsonify(create_success_response(ErrorCode.VIDEO_DELETION_SUCCESS))
 
 @video_bp.route('/video-stats', methods=['GET'])
 @jwt_required()
@@ -516,7 +531,7 @@ def get_video_stats():
         # 根据用户名查询用户ID
         user = User.query.filter_by(username=current_username).first()
         if not user:
-            return jsonify({'error': '用户不存在'}), 404
+            return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
         
         # 使用用户ID查询视频数量
         video_count = Video.query.filter_by(user_id=user.id).count()
@@ -525,7 +540,8 @@ def get_video_stats():
             'video_count': video_count
         })
     except Exception as e:
-        return jsonify({'error': f'获取视频统计数据时出错: {str(e)}'}), 500
+        error_message = f'{get_error_message(ErrorCode.VIDEO_STATS_ERROR)}: {str(e)}'
+        return jsonify({'error': error_message}), 500
 
 # 视频发布
 @video_bp.route('/publish-video', methods=['POST'])
@@ -534,7 +550,7 @@ def publish_video():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
 
     data = request.get_json()
     video_url = data.get('video_path', '')
@@ -559,9 +575,9 @@ def publish_video():
     invalid_platforms = [p for p, valid in platforms_status.items() if not valid]
     if invalid_platforms:
         return jsonify({
-            'error': 'cookies无效',
+            'error': get_error_message(ErrorCode.COOKIES_INVALID),
             'invalid_platforms': invalid_platforms,
-            'message': '请先完成以下平台的登录'
+            'message': get_error_message(ErrorCode.PLATFORM_LOGIN_REQUIRED)
         }), 403
     
     try:
@@ -582,16 +598,17 @@ def publish_video():
         # 检查上传结果
         success = all(results.values())
         if success:
-            return jsonify({'message': '视频已成功上传到各平台'})
+            return jsonify(create_success_response(ErrorCode.VIDEO_PUBLISH_SUCCESS))
         else:
             failed_platforms = [p for p, r in results.items() if not r]
             return jsonify({
-                'error': '部分平台上传失败',
+                'error': get_error_message(ErrorCode.VIDEO_PUBLISH_PARTIAL_FAILURE),
                 'failed_platforms': failed_platforms
             }), 500
             
     except Exception as e:
-        return jsonify({'error': f'上传视频时出错: {str(e)}'}), 500
+        error_message = f'{get_error_message(ErrorCode.VIDEO_PUBLISH_ERROR)}: {str(e)}'
+        return jsonify({'error': error_message}), 500
 
 # --------------------------
 # 平台 Cookie 管理 API
@@ -604,7 +621,7 @@ def get_platform_login_status():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
     
     # from services.video.cookies_core import check_cookies_validity
     
@@ -623,17 +640,17 @@ def platform_login():
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
     
     data = request.get_json()
     platform = data.get('platform')
     if not platform:
-        return jsonify({'error': '未指定平台'}), 400
+        return jsonify(create_error_response(ErrorCode.PLATFORM_NOT_SPECIFIED)), 400
         
     # from services.video.cookies_core import PLATFORM_LOGIN_URLS, get_cookies_with_playwright
     
     if platform not in PLATFORM_LOGIN_URLS:
-        return jsonify({'error': '无效的平台'}), 400
+        return jsonify(create_error_response(ErrorCode.INVALID_PLATFORM)), 400
     
     try:
         # 在同步函数中运行异步操作
@@ -649,9 +666,10 @@ def platform_login():
         loop.close()
         
         if result['success']:
-            return jsonify({'success': True, 'message': '登录成功'})
+            return jsonify({'success': True, 'message': get_error_message(ErrorCode.LOGIN_SUCCESS)})
         else:
             return jsonify({'success': False, 'error': result['message']}), 500
             
     except Exception as e:
-        return jsonify({'success': False, 'error': f'登录过程出错: {str(e)}'}), 500
+        error_message = f'{get_error_message(ErrorCode.LOGIN_ERROR)}: {str(e)}'
+        return jsonify({'success': False, 'error': error_message}), 500

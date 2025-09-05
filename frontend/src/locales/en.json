@@ -10,6 +10,25 @@
     "register": "Register"
   },
   "unknown": "Unknown",
+  "errors": {
+    "USER_001": "Username or password error",
+    "USER_002": "User not found",
+    "USER_003": "Current password error",
+    "USER_004": "Missing required fields",
+    "USER_005": "Username and password are required",
+    "USER_006": "Username already exists",
+    "USER_007": "Email already registered",
+    "WP_001": "Site not found or access denied",
+    "WP_002": "Site URL already exists",
+    "WX_001": "WeChat account not found or access denied",
+    "WX_002": "AppID already exists",
+    "RESET_001": "Email address is required",
+    "RESET_002": "New password is required",
+    "VERIFY_001": "Invalid verification code",
+    "VERIFY_002": "Expired verification code",
+    "COMMON_001": "Unknown error",
+    "COMMON_002": "Platform name is required"
+  },
   "navbar": {
     "searchPlaceholder": "Search videos..."
   },
@@ -198,6 +217,7 @@
     "generatingTitle": "Generating...",
     "generateVideo": "Generate Video",
     "uploadPlatforms": "Upload Platforms",
+    "invalidUrl": "The URL you entered is not valid. Please enter a valid URL or more content.",
     "videoGeneration": "Generating Video",
     "preview": "Preview",
     "coverPreview": "Cover Preview",
@@ -380,6 +400,7 @@
     "appIdPlaceholder": "Enter AppID",
     "accountIdPlaceholder": "Enter Account ID",
     "appSecretPlaceholder": "Enter AppSecret",
-    "wxFooterPlaceholder": "Enter WX Footer"
+    "wxFooterPlaceholder": "Enter WX Footer",
+    "allFieldsRequired": "All fields are required"
   }
 }

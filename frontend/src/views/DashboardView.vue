@@ -164,7 +164,10 @@ const fetchPlatformStats = async () => {
       wechatAccountsCount: response.data.wechat_accounts_count
     }
   } catch (error) {
-    console.error('获取平台统计数据失败:', error)
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      console.error(errorMessage || '获取平台统计数据失败');
+    });
   }
 }
 
@@ -176,7 +179,10 @@ const fetchVideoStats = async () => {
       videoCount: response.data.video_count
     }
   } catch (error) {
-    console.error('获取视频统计数据失败:', error)
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      console.error(errorMessage || '获取视频统计数据失败');
+    });
   }
 }
 
@@ -188,7 +194,10 @@ const fetchNoteStats = async () => {
       noteCount: response.data.note_count
     }
   } catch (error) {
-    console.error('获取笔记统计数据失败:', error)
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      console.error(errorMessage || '获取笔记统计数据失败');
+    });
   }
 }
 

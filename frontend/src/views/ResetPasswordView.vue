@@ -41,6 +41,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -72,8 +73,19 @@ const handleResetPassword = async () => {
     // 跳转到登录页面
     router.push('/login')
   } else {
-    // 显示错误信息
-    alert(error || t('resetPassword.operationFailed'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('resetPassword.operationFailed'));
   }
   
   loading.value = false

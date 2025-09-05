@@ -50,6 +50,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const router = useRouter()
 const route = useRoute()
@@ -103,8 +104,19 @@ const handleResetPasswordConfirm = async () => {
       router.push('/login')
     }, 3000)
   } catch (err) {
-    // 显示错误信息
-    error.value = err.response?.data?.message || t('resetPasswordConfirm.failure')
+    // 处理错误信息
+    const errorResult = handleApiError(err);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    error.value = errorMessage || t('resetPasswordConfirm.failure');
   } finally {
     loading.value = false
   }

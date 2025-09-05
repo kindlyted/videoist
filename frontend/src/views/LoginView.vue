@@ -68,6 +68,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -99,14 +100,35 @@ const handleLogin = async () => {
       // 登录成功，跳转到首页
       router.push('/')
     } else {
-      // 显示错误信息
-      const errorMessage = error === 'login.loginFailed' ? t('login.loginFailed') : error
-      alert(errorMessage || t('login.loginFailed'))
+      // 处理错误信息
+      const errorResult = handleApiError(error);
+      let errorMessage = '';
+      
+      if (errorResult.message) {
+        errorMessage = errorResult.message;
+      } else if (errorResult.messageKey) {
+        errorMessage = t(errorResult.messageKey);
+      } else if (errorResult.errorCode) {
+        errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+      }
+      
+      alert(errorMessage || t('login.loginFailed'));
     }
   } catch (err) {
     loading.value = false
     // 处理网络错误等异常情况
-    alert(t('login.loginFailed'))
+    const errorResult = handleApiError(err);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('login.loginFailed'));
   }
 }
 </script>

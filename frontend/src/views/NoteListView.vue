@@ -76,7 +76,10 @@ const fetchNotes = async () => {
     const response = await api.get('/notes');
     notes.value = response.data.data || [];
   } catch (error) {
-    console.error('获取笔记失败:', error);
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      console.error(errorMessage || '获取笔记失败');
+    });
     notes.value = [];
   } finally {
     loading.value = false;
@@ -122,8 +125,10 @@ const requestDeleteNote = async (note) => {
     
     console.log('笔记删除成功');
   } catch (error) {
-    console.error('删除笔记失败:', error);
-    alert('删除笔记失败，请重试');
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      alert(errorMessage || '删除笔记失败');
+    });
   }
 }
 

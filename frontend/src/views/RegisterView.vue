@@ -74,6 +74,7 @@ import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -123,8 +124,19 @@ const handleRegister = async () => {
     // 注册成功，跳转到首页
     router.push('/')
   } else {
-    // 显示错误信息
-    alert(error || $t('register.registrationFailed'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('register.registrationFailed'));
   }
 }
 </script>

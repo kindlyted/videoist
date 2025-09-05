@@ -21,13 +21,13 @@
         <label class="block text-gray-700 text-sm font-bold mb-2" for="articleUrl">
           {{ $t('videoCreation.articleUrl') }}
         </label>
-        <input
+        <textarea
           id="articleUrl"
           v-model="urlForm.articleUrl"
           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          type="url"
+          rows="3"
           :placeholder="$t('videoCreation.enterArticleUrlPlaceholder')"
-        />
+        ></textarea>
       </div>
       
       <!-- 发布平台开关 -->
@@ -377,12 +377,31 @@ const processUrl = async () => {
     return
   }
   
+  // 处理多行输入，提取第一行作为主要URL
+  const lines = urlForm.value.articleUrl.trim().split('\n');
+  const url = lines[0].trim();
+  
+  if (!url) {
+    alert(t('videoCreation.enterArticleUrl'))
+    return
+  }
+  
+  // 检查URL有效性
+  if (url.length <= 100) {
+    try {
+      new URL(url);
+    } catch (e) {
+      alert(t('videoCreation.invalidUrl'))
+      return
+    }
+  }
+  
   isProcessing.value = true
   
   try {
     // 调用后端API处理URL
     const response = await longProcessApi.post('/post-article', {
-      url: urlForm.value.articleUrl,
+      url: url,
       mode: urlForm.value.contentMode,
       wordpress_switch: urlForm.value.wordpressSwitch ? 'on' : 'off',
       wechat_switch: urlForm.value.wechatSwitch ? 'on' : 'off'
@@ -399,7 +418,10 @@ const processUrl = async () => {
     contentForm.value.article = response.data.article_text
   } catch (error) {
     console.error('处理URL失败:', error)
-    alert(`${t('videoCreation.processUrlFailed')}: ${error.response?.data?.error || error.message}`)
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error)
+      alert(`${t('videoCreation.processUrlFailed')}: ${errorMessage}`)
+    })
   } finally {
     isProcessing.value = false
   }
@@ -426,7 +448,10 @@ const generateTitle = async () => {
     contentForm.value.cover = response.data.cover
   } catch (error) {
     console.error('生成标题失败:', error)
-    alert(t('videoCreation.generateTitleFailed'))
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error)
+      alert(errorMessage)
+    })
   } finally {
     isGeneratingTitle.value = false
   }
@@ -470,7 +495,10 @@ const generateVideo = async () => {
     }
   } catch (error) {
     console.error('生成视频失败:', error)
-    alert(`${t('videoCreation.generateVideoFailed')}: ${error.message || t('videoCreation.pleaseRetry')}`)
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error)
+      alert(`${t('videoCreation.generateVideoFailed')}: ${errorMessage}`)
+    })
   } finally {
     isGeneratingVideo.value = false
   }
@@ -501,7 +529,10 @@ const handlePlatformSelect = async (platformId) => {
     }
   } catch (error) {
     console.error('启动登录流程失败:', error)
-    alert(error.response?.data?.error || t('videoCreation.startLoginFailed'))
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error)
+      alert(errorMessage)
+    })
   }
 }
 
@@ -534,7 +565,10 @@ const startUploadVideo = async () => {
     await uploadVideo()
   } catch (error) {
     console.error('检查平台登录状态或启动登录流程失败:', error)
-    alert(error.response?.data?.error || t('videoCreation.checkPlatformLoginFailed'))
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error)
+      alert(errorMessage)
+    })
   }
 }
 
@@ -565,9 +599,15 @@ const uploadVideo = async () => {
       currentLoginPlatform.value = pendingPlatforms.value[0]
       showLoginDialog.value = true
       showPlatformLoginWindow.value = false
-      alert(t('videoCreation.platformsNeedRelogin'))
+      import('@/utils/errorHandler').then(module => {
+        const errorMessage = module.handleApiError(error)
+        alert(errorMessage)
+      })
     } else {
-      alert(error.response?.data?.error || t('videoCreation.uploadVideoFailed'))
+      import('@/utils/errorHandler').then(module => {
+        const errorMessage = module.handleApiError(error)
+        alert(errorMessage)
+      })
     }
   } finally {
     isUploadingVideo.value = false
@@ -600,7 +640,10 @@ const onPlatformLogin = async () => {
 const onPlatformLoginError = async (error) => {
   console.error(t('videoCreation.platformLoginFailed'), error)
   showPlatformLoginWindow.value = false
-  alert(`${currentLoginPlatform.value}${t('videoCreation.loginFailed')},${t('videoCreation.pleaseRetry')}`)
+  import('@/utils/errorHandler').then(module => {
+    const errorMessage = module.handleApiError(error)
+    alert(`${currentLoginPlatform.value}${t('videoCreation.loginFailed')},${errorMessage}`)
+  })
 }
 
 // 获取用户凭据信息
@@ -617,6 +660,9 @@ const fetchUserCredentials = async () => {
       wechatResponse.data.some(account => account.app_id && account.app_secret)
   } catch (error) {
     console.error('获取用户凭据信息失败:', error)
+    import('@/utils/errorHandler').then(module => {
+      module.handleApiError(error)
+    })
     // 出错时默认禁用开关
     hasWordPressSites.value = false
     hasWeChatAccounts.value = false
@@ -641,6 +687,9 @@ const fetchVoiceOptions = async () => {
     }
   } catch (error) {
     console.error('获取语音选项失败:', error)
+    import('@/utils/errorHandler').then(module => {
+      module.handleApiError(error)
+    })
     // 如果获取失败，使用模拟数据
     voiceOptions.value = [
       { id: 'xiaoyan', name: t('videoCreation.xiaoyan') },

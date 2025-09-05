@@ -345,8 +345,11 @@ const updatePassword = async () => {
       passwordMessageType.value = 'error'
     }
   } catch (err) {
-    passwordMessage.value = t('settings.password.unknownError')
-    passwordMessageType.value = 'error'
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(err);
+      passwordMessage.value = errorMessage;
+    });
+    passwordMessageType.value = 'error';
   } finally {
     passwordLoading.value = false
   }

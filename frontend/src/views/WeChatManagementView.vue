@@ -212,6 +212,7 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/components/Modal.vue'
 import api from '@/services/api'
 import { ChatBubbleLeftRightIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const { t } = useI18n()
 
@@ -281,6 +282,19 @@ const fetchAccounts = async () => {
     }))
   } catch (error) {
     console.error('获取账号列表失败:', error)
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || '获取账号列表失败');
     // 使用模拟数据作为后备
     accounts.value = [
       {
@@ -324,8 +338,19 @@ const addAccount = async () => {
       accountForm.value[key] = ''
     })
   } catch (error) {
-    console.error(t('wechatManagement.addAccountFailed'), error)
-    alert(t('wechatManagement.addAccountFailed') + (error.response?.data?.error || '未知错误'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wechatManagement.addAccountFailed'));
   }
 }
 
@@ -350,8 +375,19 @@ const updateAccount = async () => {
     closeModal()
     alert(t('wechatManagement.accountUpdated'))
   } catch (error) {
-    console.error(t('wechatManagement.updateAccountFailed'), error)
-    alert(t('wechatManagement.updateAccountFailed') + (error.response?.data?.error || '未知错误'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wechatManagement.updateAccountFailed'));
   }
 }
 
@@ -366,8 +402,19 @@ const deleteAccount = async () => {
     accountToDelete.value = null
     alert(t('wechatManagement.accountDeleted'))
   } catch (error) {
-    console.error(t('wechatManagement.deleteAccountFailed'), error)
-    alert(t('wechatManagement.deleteAccountFailed') + (error.response?.data?.error || '未知错误'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wechatManagement.deleteAccountFailed'));
   }
 }
 

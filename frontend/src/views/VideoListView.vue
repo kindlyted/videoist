@@ -140,6 +140,9 @@ const fetchVideos = async () => {
     }));
   } catch (error) {
     console.error('获取视频失败:', error);
+    import('@/utils/errorHandler').then(module => {
+      module.handleApiError(error);
+    });
     // 出错时使用空数组
     videos.value = [];
   } finally {
@@ -203,6 +206,9 @@ const onPlatformLogin = async () => {
       }
     } catch (error) {
       console.error('视频上传失败:', error)
+      import('@/utils/errorHandler').then(module => {
+        module.handleApiError(error);
+      });
     }
   }
 }
@@ -210,6 +216,9 @@ const onPlatformLogin = async () => {
 const onPlatformLoginError = (error) => {
   showPlatformLoginWindow.value = false
   console.error('平台登录失败:', error)
+  import('@/utils/errorHandler').then(module => {
+    module.handleApiError(error);
+  });
 }
 
 // 请求删除视频
@@ -228,7 +237,10 @@ const confirmDeleteVideo = async () => {
       console.log('删除视频:', videoToDelete.value)
     } catch (error) {
       console.error('删除视频失败:', error)
-      alert('删除视频失败，请重试')
+      import('@/utils/errorHandler').then(module => {
+        const errorMessage = module.handleApiError(error);
+        alert(errorMessage);
+      });
     } finally {
       videoToDelete.value = null
     }

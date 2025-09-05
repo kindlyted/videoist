@@ -120,7 +120,7 @@
         :cancel-text="$t('wordpressManagement.cancel')"
         :show-footer="true"
         size="md"
-        @confirm="saveSite"
+        @confirm="handleSaveSite"
         @cancel="closeModal"
       >
       <form @submit.prevent="saveSite">
@@ -212,6 +212,7 @@ import api from '@/services/api'
 import Modal from '@/components/Modal.vue'
 import Switch from '@/components/Switch.vue'
 import { GlobeAltIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import { handleApiError, getErrorMessageKey } from '@/utils/errorHandler'
 
 const { t } = useI18n()
 
@@ -267,6 +268,19 @@ const fetchSites = async () => {
     }))
   } catch (error) {
     console.error('获取站点列表失败:', error)
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || '获取站点列表失败');
     // 使用模拟数据作为后备
     sites.value = [
       {
@@ -339,8 +353,19 @@ const addSite = async () => {
       siteForm.value[key] = ''
     })
   } catch (error) {
-    console.error(t('wordpressManagement.addSiteFailed'), error)
-    console.error(t('wordpressManagement.addSiteFailed'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wordpressManagement.addSiteFailed'));
   }
 }
 
@@ -367,8 +392,19 @@ const updateSite = async () => {
     closeModal()
     console.log(t('wordpressManagement.siteUpdated'))
   } catch (error) {
-    console.error(t('wordpressManagement.updateSiteFailed'), error)
-    console.error(t('wordpressManagement.updateSiteFailed'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wordpressManagement.updateSiteFailed'));
   }
 }
 
@@ -385,8 +421,19 @@ const deleteSite = async (siteId) => {
     }
     console.log(t('wordpressManagement.siteDeleted'))
   } catch (error) {
-    console.error(t('wordpressManagement.deleteSiteFailed'), error)
-    console.error(t('wordpressManagement.deleteSiteFailed'))
+    // 处理错误信息
+    const errorResult = handleApiError(error);
+    let errorMessage = '';
+    
+    if (errorResult.message) {
+      errorMessage = errorResult.message;
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey);
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode));
+    }
+    
+    alert(errorMessage || t('wordpressManagement.deleteSiteFailed'));
   }
 }
 
@@ -403,6 +450,15 @@ const editSite = (site) => {
   showEditSiteModal.value = true
   showAddSiteModal.value = true
 }
+
+const validateForm = () => {
+  if (!siteForm.value.name || !siteForm.value.url || !siteForm.value.username || 
+      !siteForm.value.apiKey || !siteForm.value.wpTag || !siteForm.value.wpFooter) {
+    alert(t('wordpressManagement.allFieldsRequired'));
+    return false;
+  }
+  return true;
+};
 
 const validateWpTag = (wpTag) => {
   try {
@@ -425,13 +481,15 @@ const validateHttpsUrl = (url) => {
 };
 
 const saveSite = async () => {
+  if (!validateForm()) return false;
+  
   if (!validateWpTag(siteForm.value.wpTag)) {
     alert(t('wordpressManagement.wpTagInvalid'));
-    return;
+    return false;
   }
   if (!validateHttpsUrl(siteForm.value.url)) {
     alert(t('wordpressManagement.urlMustBeHttps'));
-    return;
+    return false;
   }
   if (siteForm.value.id) {
     // 更新站点
@@ -439,6 +497,14 @@ const saveSite = async () => {
   } else {
     // 添加站点
     await addSite()
+  }
+  return true;
+}
+
+const handleSaveSite = async () => {
+  const success = await saveSite();
+  if (success) {
+    closeModal();
   }
 }
 

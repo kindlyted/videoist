@@ -212,6 +212,9 @@ const fetchVideo = async () => {
     relatedVideos.value = [];
   } catch (error) {
     console.error('获取视频详情失败:', error);
+    import('@/utils/errorHandler').then(module => {
+      module.handleApiError(error);
+    });
     // 出错时使用空数据
     video.value = null;
     relatedVideos.value = [];

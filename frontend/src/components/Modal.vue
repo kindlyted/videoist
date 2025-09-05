@@ -179,7 +179,6 @@ const closeModal = () => {
 // 确认
 const handleConfirm = () => {
   emit('confirm')
-  closeModal()
 }
 
 // 取消

@@ -31,6 +31,32 @@ def generating_byds(content, prompt_path):
     print("DeepSeek大模型工作中，请稍等片刻")
     return answer
 
+
+def get_error_message(error_code, language='zh'):
+    """
+    根据错误代码和语言获取相应的错误信息
+    """
+    from services.common.error_codes import ERROR_MESSAGES_ZH, ERROR_MESSAGES_EN
+    
+    if language == 'en':
+        return ERROR_MESSAGES_EN.get(error_code, 'Unknown error')
+    else:
+        return ERROR_MESSAGES_ZH.get(error_code, '未知错误')
+
+
+def create_error_response(error_code, language='zh'):
+    """
+    创建错误响应
+    """
+    return {'error': get_error_message(error_code, language)}
+
+
+def create_success_response(message_code, language='zh'):
+    """
+    创建成功响应
+    """
+    return {'message': get_error_message(message_code, language)}
+
 # gpt part 生成正文，postist_core.py里也有，但后缀不同表示api不同
 def generating_bykm(content, prompt_path):
     client = OpenAI(

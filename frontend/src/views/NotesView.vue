@@ -146,7 +146,10 @@ const uploadFile = async () => {
       errorMessage.value = response.data.message || t('noteCreation.conversionFailed')
     }
   } catch (error) {
-    errorMessage.value = error.response?.data?.message || t('noteCreation.uploadFailed')
+    import('@/utils/errorHandler').then(module => {
+      const errorMessage = module.handleApiError(error);
+      errorMessage.value = errorMessage;
+    });
   } finally {
     isUploading.value = false
   }

@@ -6,6 +6,8 @@ from models import db, User, WordPressSite, WechatAccount, PlatformCookies
 from datetime import timedelta
 import time
 import hashlib
+from services.common.error_codes import ErrorCode, ERROR_MESSAGES_ZH, ERROR_MESSAGES_EN
+from services.common.utils import get_error_message, create_error_response, create_success_response
 
 # 创建蓝图
 auth_bp = Blueprint('auth', __name__)
@@ -32,11 +34,17 @@ def login():
     """JWT 登录接口"""
     data = request.get_json()
     if not data or 'username' not in data or 'password' not in data:
-        return jsonify({"error": "必须提供用户名和密码"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_USERNAME_OR_PASSWORD.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_USERNAME_OR_PASSWORD]
+        }), 400
 
     user = User.query.filter_by(username=data['username']).first()
     if not user or not user.verify_password(data['password']):
-        return jsonify({"error": "用户名或密码错误"}), 401
+        return jsonify({
+            "error_code": ErrorCode.USERNAME_OR_PASSWORD_ERROR.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.USERNAME_OR_PASSWORD_ERROR]
+        }), 401
 
     # 生成 Token（有效期7天）
     access_token = create_access_token(
@@ -63,7 +71,10 @@ def get_user_info():
     user = User.query.filter_by(username=current_user).first()
     
     if not user:
-        return jsonify({"error": "用户不存在"}), 404
+        return jsonify({
+            "error_code": ErrorCode.USER_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.USER_NOT_FOUND]
+        }), 404
     
     return jsonify({
         "user": {
@@ -88,7 +99,7 @@ def logout():
     # 在实际应用中，你可能想要将token加入黑名单
     # 但在这个简单的实现中，我们只需要返回成功响应
     # 前端会负责删除本地存储的token
-    return jsonify({"message": "成功登出"}), 200
+    return jsonify(create_success_response(ErrorCode.LOGOUT_SUCCESS)), 200
 
 @auth_bp.route('/check-platform-login', methods=['GET'])
 @jwt_required()
@@ -96,13 +107,19 @@ def check_platform_login():
     """检查平台登录状态"""
     platform = request.args.get('platform')
     if not platform:
-        return jsonify({"error": "必须指定平台名称"}), 400
+        return jsonify({
+            "error_code": ErrorCode.INVALID_PLATFORM.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.INVALID_PLATFORM]
+        }), 400
     
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     
     if not user:
-        return jsonify({"error": "用户不存在"}), 404
+        return jsonify({
+            "error_code": ErrorCode.USER_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.USER_NOT_FOUND]
+        }), 404
     
     # 检查数据库中是否存在有效的cookies
     platform_cookies = PlatformCookies.query.filter_by(
@@ -125,21 +142,27 @@ def update_password():
     user = User.query.filter_by(username=current_user).first()
     
     if not user:
-        return jsonify({"error": "用户不存在"}), 404
+        return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
     
     data = request.get_json()
     if not data or 'current_password' not in data or 'new_password' not in data:
-        return jsonify({"error": "必须提供当前密码和新密码"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
     
     # 验证当前密码
     if not user.verify_password(data['current_password']):
-        return jsonify({"error": "当前密码错误"}), 400
+        return jsonify({
+            "error_code": ErrorCode.CURRENT_PASSWORD_ERROR.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.CURRENT_PASSWORD_ERROR]
+        }), 400
     
     # 更新密码
     user.set_password(data['new_password'])
     db.session.commit()
     
-    return jsonify({"message": "密码更新成功"}), 200
+    return jsonify(create_success_response(ErrorCode.PASSWORD_UPDATE_SUCCESS)), 200
 
 @auth_bp.route('/register', methods=['POST'])
 def register():
@@ -147,13 +170,22 @@ def register():
     data = request.get_json()
     required_fields = ['username', 'password', 'email']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "缺少必填字段"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
 
     if User.query.filter_by(username=data['username']).first():
-        return jsonify({"error": "用户名已存在"}), 409
+        return jsonify({
+            "error_code": ErrorCode.USERNAME_EXISTS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.USERNAME_EXISTS]
+        }), 409
 
     if User.query.filter_by(email=data['email']).first():
-        return jsonify({"error": "邮箱已被注册"}), 409
+        return jsonify({
+            "error_code": ErrorCode.EMAIL_EXISTS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.EMAIL_EXISTS]
+        }), 409
 
     try:
         user = User(
@@ -215,7 +247,10 @@ def add_wordpress_site():
 
     required_fields = ['site_name', 'site_url', 'username', 'api_key']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "缺少必要字段"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
 
     # 检查站点是否已存在
     existing_site = WordPressSite.query.filter_by(
@@ -224,11 +259,14 @@ def add_wordpress_site():
     ).first()
 
     if existing_site:
-        return jsonify({"error": "该站点URL已存在"}), 409
+        return jsonify({
+            "error_code": ErrorCode.WORDPRESS_SITE_EXISTS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.WORDPRESS_SITE_EXISTS]
+        }), 409
 
     required_fields = ['site_name', 'site_url', 'username', 'api_key', 'wp_tag', 'wp_footer']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "缺少必要字段"}), 400
+        return jsonify(create_error_response(ErrorCode.MISSING_REQUIRED_FIELDS)), 400
 
     try:
         site = WordPressSite(
@@ -262,11 +300,14 @@ def update_wordpress_site(site_id):
     ).first()
 
     if not site:
-        return jsonify({"error": "站点不存在或无权访问"}), 404
+        return jsonify({
+            "error_code": ErrorCode.WORDPRESS_SITE_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.WORDPRESS_SITE_NOT_FOUND]
+        }), 404
 
     required_fields = ['site_name', 'site_url', 'username', 'api_key', 'wp_tag', 'wp_footer']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "缺少必要字段"}), 400
+        return jsonify(create_error_response(ErrorCode.MISSING_REQUIRED_FIELDS)), 400
 
     try:
         # 更新站点信息
@@ -297,7 +338,7 @@ def delete_wordpress_site(site_id):
     ).first()
 
     if not site:
-        return jsonify({"error": "站点不存在或无权访问"}), 404
+        return jsonify(create_error_response(ErrorCode.WORDPRESS_SITE_NOT_FOUND)), 404
 
     try:
         site.is_active = False
@@ -343,7 +384,7 @@ def add_wechat_account():
 
     required_fields = ['account_name', 'account_id', 'app_id', 'app_secret']
     if not all(field in data for field in required_fields):
-        return jsonify({"error": "缺少必要字段"}), 400
+        return jsonify(create_error_response(ErrorCode.MISSING_REQUIRED_FIELDS)), 400
 
     # 检查是否已存在
     existing_account = WechatAccount.query.filter_by(
@@ -352,7 +393,7 @@ def add_wechat_account():
     ).first()
 
     if existing_account:
-        return jsonify({"error": "该AppID已存在"}), 409
+        return jsonify(create_error_response(ErrorCode.WECHAT_APPID_EXISTS)), 409
 
     try:
         account = WechatAccount(
@@ -385,7 +426,10 @@ def update_wechat_account(account_id):
     ).first()
 
     if not account:
-        return jsonify({"error": "公众号不存在或无权访问"}), 404
+        return jsonify({
+            "error_code": ErrorCode.WECHAT_ACCOUNT_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.WECHAT_ACCOUNT_NOT_FOUND]
+        }), 404
 
     try:
         # 更新公众号信息
@@ -420,7 +464,10 @@ def delete_wechat_account(account_id):
     ).first()
 
     if not account:
-        return jsonify({"error": "公众号不存在或无权访问"}), 404
+        return jsonify({
+            "error_code": ErrorCode.WECHAT_ACCOUNT_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.WECHAT_ACCOUNT_NOT_FOUND]
+        }), 404
 
     try:
         account.is_active = False
@@ -440,12 +487,15 @@ def reset_password():
     """重置密码接口"""
     data = request.get_json()
     if not data or 'email' not in data:
-        return jsonify({"error": "必须提供邮箱地址"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_EMAIL.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_EMAIL]
+        }), 400
 
     user = User.query.filter_by(email=data['email']).first()
     if not user:
         # 为了安全起见，即使用户不存在也返回成功
-        return jsonify({"message": "如果该邮箱存在，重置链接已发送"}), 200
+        return jsonify(create_success_response(ErrorCode.PASSWORD_RESET_EMAIL_SENT)), 200
 
     # 生成重置令牌（简化实现，实际应用中应使用更安全的方法）
     reset_token = f"{user.id}-{user.email}-{int(time.time())}"
@@ -455,7 +505,7 @@ def reset_password():
     # 为简化起见，我们只是返回令牌
     reset_url = f"{request.host_url}reset-password/{reset_token_hash}"
     return jsonify({
-        "message": "重置链接已发送到您的邮箱",
+        "message": get_error_message(ErrorCode.PASSWORD_RESET_EMAIL_SENT),
         "reset_url": reset_url  # 仅用于测试，实际应用中不应返回此信息
     }), 200
 
@@ -465,7 +515,10 @@ def reset_password_confirm(token):
     """确认重置密码接口"""
     data = request.get_json()
     if not data or 'password' not in data:
-        return jsonify({"error": "必须提供新密码"}), 400
+        return jsonify({
+            "error_code": ErrorCode.MISSING_PASSWORD.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_PASSWORD]
+        }), 400
     
     # 在实际应用中，这里会验证令牌
     # 为简化起见，我们接受任何令牌
@@ -477,4 +530,4 @@ def reset_password_confirm(token):
     # 由于简化实现，我们无法验证令牌，直接返回成功
     # 在实际应用中，请实现完整的令牌验证逻辑
     
-    return jsonify({"message": "密码重置成功"}), 200
+    return jsonify(create_success_response(ErrorCode.PASSWORD_RESET_SUCCESS)), 200

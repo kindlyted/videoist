@@ -64,3 +64,5 @@ scripts/run_tests.sh
 prompt_modification_suggestions.md
 test_prompt.py
 static/prompts/tmp.prompt
+test_api_response.py
+test_api.py

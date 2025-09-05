@@ -8,6 +8,8 @@ from services.note.note_core import process_pdf_to_png
 from config import Config
 from models import Note, User
 from extensions import db
+from services.common.error_codes import ErrorCode
+from services.common.utils import get_error_message, create_error_response, create_success_response
 
 # 创建蓝图
 note_bp = Blueprint('note', __name__)
@@ -27,16 +29,16 @@ def upload_file():
     
     if 'file' not in request.files:
         current_app.logger.error("未接收到文件字段")
-        return jsonify({'success': False, 'message': '未选择文件'}), 400
+        return jsonify(create_error_response(ErrorCode.NO_FILE_SELECTED)), 400
     
     file = request.files['file']
     if file.filename == '':
         current_app.logger.error("文件名为空")
-        return jsonify({'success': False, 'message': '未选择文件'}), 400
+        return jsonify(create_error_response(ErrorCode.NO_FILE_SELECTED)), 400
     
     if not allowed_file(file.filename):
         current_app.logger.error(f"文件类型不支持: {file.filename}")
-        return jsonify({'success': False, 'message': '仅支持PDF文件'}), 400
+        return jsonify(create_error_response(ErrorCode.UNSUPPORTED_FILE_TYPE)), 400
     
     try:
         filename = secure_filename(file.filename)
@@ -55,7 +57,7 @@ def upload_file():
         current_username = get_jwt_identity()
         user = User.query.filter_by(username=current_username).first()
         if not user:
-            return jsonify({'success': False, 'message': '用户不存在'}), 404
+            return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
 
         note = Note(
             title=filename,  # 使用上传的PDF文件名作为标题
@@ -68,13 +70,13 @@ def upload_file():
         
         return jsonify({
             'success': True,
-            'message': '文件处理成功',
+            'message': get_error_message(ErrorCode.FILE_PROCESSING_SUCCESS),
             'image_url': url_for('storage_files', filename=f'note_output/{os.path.basename(output_pic_path)}')
         })
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(f"处理文件时出错: {str(e)}")
-        return jsonify({'success': False, 'message': '服务器内部错误'}), 500
+        return jsonify(create_error_response(ErrorCode.INTERNAL_SERVER_ERROR)), 500
 
 @note_bp.route('/notes', methods=['GET'])
 @jwt_required()
@@ -125,20 +127,20 @@ def delete_note(note_id):
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
     if not user:
-        return jsonify({'error': '用户未登录'}), 401
+        return jsonify(create_error_response(ErrorCode.USER_NOT_LOGGED_IN)), 401
         
     # 获取笔记信息
     note = Note.query.get_or_404(note_id)
     
     # 检查笔记是否属于当前用户
     if note.user_id != user.id:
-        return jsonify({'error': '无权删除此笔记'}), 403
+        return jsonify(create_error_response(ErrorCode.UNAUTHORIZED_NOTE_DELETION)), 403
     
     # 删除笔记
     db.session.delete(note)
     db.session.commit()
     
-    return jsonify({'message': '笔记删除成功'})
+    return jsonify(create_success_response(ErrorCode.NOTE_DELETION_SUCCESS))
 
 @note_bp.route('/note-stats', methods=['GET'])
 @jwt_required()
@@ -151,7 +153,7 @@ def get_note_stats():
         # 根据用户名查询用户ID
         user = User.query.filter_by(username=current_username).first()
         if not user:
-            return jsonify({'error': '用户不存在'}), 404
+            return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
         
         # 使用用户ID查询笔记数量
         note_count = Note.query.filter_by(user_id=user.id).count()
@@ -160,4 +162,4 @@ def get_note_stats():
             'note_count': note_count
         })
     except Exception as e:
-        return jsonify({'error': f'获取笔记统计数据时出错: {str(e)}'}), 500
+        return jsonify(create_error_response(ErrorCode.NOTE_STATS_ERROR, str(e))), 500
