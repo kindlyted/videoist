@@ -34,17 +34,17 @@ def generating_byds(content, prompt_path):
     # 定义提示词
     with open(prompt_path, 'r', encoding='utf-8') as file:
         your_prompt = file.read()
-    your_prompt = your_prompt + content
+    # your_prompt = your_prompt + content
     try:
         completion = client.chat.completions.create(
             model='deepseek-chat',   
-            messages = [
-                {
-                    "role": "user",
-                    "content": your_prompt
-                }
-            ],
-            stream=False
+            messages = [{"role": "system", "content": your_prompt}, {"role": "user", "content": content}],
+            stream=False,
+            temperature=0.5,
+            max_tokens=4096,          # 防止过长
+            top_p=0.9,                # 平衡多样性
+            frequency_penalty=0.5,    # 减少重复
+            presence_penalty=0.3,     # 适度控制主题跳跃
         )
         print(completion.choices[0].message.content)
         answer = completion.choices[0].message.content

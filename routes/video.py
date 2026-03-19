@@ -152,7 +152,8 @@ def post_article():
         # Step1: 内容分析
         analysis_result = generating_jskb(
             content=content_text,
-            prompt_path=Config.PROMPT_DIR / 'content_analysis.prompt'
+            # prompt_path=Config.PROMPT_DIR / 'content_analysis.prompt'
+            prompt_path=Config.PROMPT_DIR / 'html_classify.prompt'
         )
         results['analysis'] = json.loads(analysis_result)
 
@@ -363,7 +364,7 @@ def generate_video():
     cover_txt = data.get('cover', '')
     voice = data.get('voice', Config.VOICE_NAMES[4])
     VOICE_MAPPING = {
-    "傣momo": "zh-CN-YunxiNeural",
+    "傣momo": "zh-CN-YunyangNeural",
     "喇cici": "zh-CN-XiaoxiaoNeural"
     }
     if not cover_txt:
