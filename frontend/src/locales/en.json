@@ -57,7 +57,16 @@
     "loggingIn": "Logging in...",
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
-    "loginFailed": "Login failed"
+    "loginFailed": "Login failed",
+    "login": "Login",
+    "logout": "Logout",
+    "email": "Email Address",
+    "code": "Verification Code",
+    "codePlaceholder": "6-digit verification code",
+    "getCode": "Get Code",
+    "sendCode": "Send Code",
+    "or": "Or",
+    "orLoginWith": "Or login with"
   },
   "register": {
     "title": "Register",
@@ -68,7 +77,9 @@
     "registering": "Registering...",
     "hasAccount": "Already have an account?",
     "passwordMismatch": "Passwords do not match",
-    "registrationFailed": "Registration failed"
+    "registrationFailed": "Registration failed",
+    "orRegisterWith": "Or register with",
+    "terms": "By registering, you agree to our Terms of Service"
   },
   "resetPassword": {
     "title": "Reset Password",

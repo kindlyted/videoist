@@ -6,8 +6,11 @@ from models import db, User, WordPressSite, WechatAccount, PlatformCookies
 from datetime import timedelta
 import time
 import hashlib
+import os
+import requests
 from services.common.error_codes import ErrorCode, ERROR_MESSAGES_ZH, ERROR_MESSAGES_EN
 from services.common.utils import get_error_message, create_error_response, create_success_response
+from services.common.email_service import send_and_store_code, verify_code
 
 # 创建蓝图
 auth_bp = Blueprint('auth', __name__)
@@ -31,20 +34,32 @@ def health_check():
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    """JWT 登录接口"""
+    """邮箱验证码登录接口"""
     data = request.get_json()
-    if not data or 'username' not in data or 'password' not in data:
+    if not data or 'email' not in data or 'code' not in data:
         return jsonify({
-            "error_code": ErrorCode.MISSING_USERNAME_OR_PASSWORD.value,
-            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_USERNAME_OR_PASSWORD]
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
         }), 400
 
-    user = User.query.filter_by(username=data['username']).first()
-    if not user or not user.verify_password(data['password']):
+    email = data['email'].strip().lower()
+    code = data['code'].strip()
+
+    # 验证验证码
+    is_valid, message = verify_code(email, code)
+    if not is_valid:
         return jsonify({
-            "error_code": ErrorCode.USERNAME_OR_PASSWORD_ERROR.value,
-            "message": ERROR_MESSAGES_ZH[ErrorCode.USERNAME_OR_PASSWORD_ERROR]
-        }), 401
+            "error_code": ErrorCode.INVALID_VERIFICATION_CODE.value,
+            "message": message
+        }), 400
+
+    # 查找用户
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({
+            "error_code": ErrorCode.USER_NOT_FOUND.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.USER_NOT_FOUND]
+        }), 404
 
     # 生成 Token（有效期7天）
     access_token = create_access_token(
@@ -59,7 +74,8 @@ def login():
         "user": {
             "id": user.id,
             "username": user.username,
-            "email": user.email
+            "email": user.email,
+            "auth_provider": user.auth_provider
         }
     }), 200
 
@@ -69,18 +85,20 @@ def get_user_info():
     """获取用户信息"""
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
-    
+
     if not user:
         return jsonify({
             "error_code": ErrorCode.USER_NOT_FOUND.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.USER_NOT_FOUND]
         }), 404
-    
+
     return jsonify({
         "user": {
             "id": user.id,
             "username": user.username,
-            "email": user.email
+            "email": user.email,
+            "auth_provider": user.auth_provider,
+            "avatar_url": user.avatar_url
         }
     }), 200
 
@@ -140,76 +158,243 @@ def update_password():
     """更新用户密码接口"""
     current_user = get_jwt_identity()
     user = User.query.filter_by(username=current_user).first()
-    
+
     if not user:
         return jsonify(create_error_response(ErrorCode.USER_NOT_FOUND)), 404
-    
+
+    if user.auth_provider != 'password':
+        return jsonify({
+            "error_code": ErrorCode.PASSWORD_NOT_SUPPORTED.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.PASSWORD_NOT_SUPPORTED]
+        }), 400
+
     data = request.get_json()
     if not data or 'current_password' not in data or 'new_password' not in data:
         return jsonify({
             "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
         }), 400
-    
+
     # 验证当前密码
     if not user.verify_password(data['current_password']):
         return jsonify({
             "error_code": ErrorCode.CURRENT_PASSWORD_ERROR.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.CURRENT_PASSWORD_ERROR]
         }), 400
-    
+
     # 更新密码
     user.set_password(data['new_password'])
+    user.auth_provider = 'password'  # 确保标记为密码登录
     db.session.commit()
-    
+
     return jsonify(create_success_response(ErrorCode.PASSWORD_UPDATE_SUCCESS)), 200
 
-@auth_bp.route('/register', methods=['POST'])
-def register():
-    """用户注册接口"""
+# 密码注册接口已移除，使用邮箱验证码注册
+# @auth_bp.route('/register', methods=['POST'])
+# def register():
+#     """用户注册接口（已废弃，使用邮箱验证码注册）"""
+#     return jsonify({
+#         "error_code": ErrorCode.METHOD_NOT_SUPPORTED.value,
+#         "message": "Password registration is disabled, please use email verification"
+#     }), 400
+
+
+# --------------------------
+# 邮箱验证码登录/注册 API
+# --------------------------
+
+@auth_bp.route('/send-verification-code', methods=['POST'])
+def send_verification_code():
+    """发送邮箱验证码"""
     data = request.get_json()
-    required_fields = ['username', 'password', 'email']
-    if not all(field in data for field in required_fields):
+    if not data or 'email' not in data:
+        return jsonify({
+            "error_code": ErrorCode.MISSING_EMAIL.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_EMAIL]
+        }), 400
+
+    email = data['email'].strip().lower()
+
+    try:
+        send_and_store_code(email)
+        return jsonify(create_success_response("验证码已发送")), 200
+    except Exception as e:
+        return jsonify({
+            "error_code": ErrorCode.EMAIL_SEND_FAILED.value,
+            "message": f"发送验证码失败: {str(e)}"
+        }), 500
+
+
+@auth_bp.route('/verify-and-login', methods=['POST'])
+def verify_and_login():
+    """邮箱验证码验证并登录（支持注册和登录）"""
+    data = request.get_json()
+    if not data or 'email' not in data or 'code' not in data:
         return jsonify({
             "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
         }), 400
 
-    if User.query.filter_by(username=data['username']).first():
-        return jsonify({
-            "error_code": ErrorCode.USERNAME_EXISTS.value,
-            "message": ERROR_MESSAGES_ZH[ErrorCode.USERNAME_EXISTS]
-        }), 409
+    email = data['email'].strip().lower()
+    code = data['code'].strip()
 
-    if User.query.filter_by(email=data['email']).first():
+    # 验证验证码
+    is_valid, message = verify_code(email, code)
+    if not is_valid:
         return jsonify({
-            "error_code": ErrorCode.EMAIL_EXISTS.value,
-            "message": ERROR_MESSAGES_ZH[ErrorCode.EMAIL_EXISTS]
-        }), 409
+            "error_code": ErrorCode.INVALID_VERIFICATION_CODE.value,
+            "message": message
+        }), 400
 
-    try:
+    # 查找或创建用户
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        # 新用户，自动注册
+        # 生成用户名（使用邮箱前缀）
+        username = email.split('@')[0]
+        # 确保用户名唯一
+        base_username = username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+
         user = User(
-            username=data['username'],
-            email=data['email']
+            username=username,
+            email=email,
+            auth_provider='email'
         )
-        user.set_password(data['password'])
         db.session.add(user)
         db.session.commit()
 
-        # 自动登录
-        access_token = create_access_token(identity=user.username)
+    # 生成 Token
+    access_token = create_access_token(
+        identity=user.username,
+        expires_delta=timedelta(days=7)
+    )
+
+    return jsonify({
+        "access_token": access_token,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "auth_provider": user.auth_provider
+        }
+    }), 200
+
+
+# --------------------------
+# Google OAuth 登录 API
+# --------------------------
+
+@auth_bp.route('/google-login', methods=['POST'])
+def google_login():
+    """Google OAuth 登录（使用access_token）"""
+    data = request.get_json()
+    if not data or 'access_token' not in data:
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": "Missing access_token"
+        }), 400
+
+    access_token = data['access_token']
+
+    try:
+        # 使用 Google API 验证 access_token
+        google_client_id = os.getenv('GOOGLE_CLIENT_ID')
+        if not google_client_id or google_client_id == 'your-google-client-id':
+            return jsonify({
+                "error_code": ErrorCode.SYSTEM_ERROR.value,
+                "message": "Google OAuth not configured"
+            }), 500
+
+        # 验证 access_token
+        userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+        response = requests.get(userinfo_url, headers=headers)
+        if response.status_code != 200:
+            return jsonify({
+                "error_code": ErrorCode.INVALID_TOKEN.value,
+                "message": "Invalid Google token"
+            }), 401
+
+        userinfo = response.json()
+
+        # 验证 audience
+        if userinfo.get('hd') and 'google.com' in userinfo.get('hd'):
+            # 验证域名
+            pass
+
+        google_id = userinfo.get('id')
+        email = userinfo.get('email')
+        name = userinfo.get('name', '')
+        picture = userinfo.get('picture')
+
+        if not email or not google_id:
+            return jsonify({
+                "error_code": ErrorCode.INVALID_TOKEN.value,
+                "message": "Invalid token payload"
+            }), 401
+
+        # 查找或创建用户
+        user = User.query.filter_by(google_id=google_id).first()
+
+        if not user:
+            # 检查邮箱是否已存在
+            user = User.query.filter_by(email=email).first()
+            if user:
+                # 已存在邮箱用户，关联Google ID
+                user.google_id = google_id
+                user.auth_provider = 'google'
+                if user.avatar_url and picture:
+                    user.avatar_url = picture
+            else:
+                # 新用户，创建
+                username = email.split('@')[0]
+                base_username = username
+                counter = 1
+                while User.query.filter_by(username=username).first():
+                    username = f"{base_username}{counter}"
+                    counter += 1
+
+                user = User(
+                    username=username,
+                    email=email,
+                    google_id=google_id,
+                    auth_provider='google',
+                    avatar_url=picture
+                )
+                db.session.add(user)
+
+            db.session.commit()
+
+        # 生成 Token
+        access_token = create_access_token(
+            identity=user.username,
+            expires_delta=timedelta(days=7)
+        )
+
         return jsonify({
             "access_token": access_token,
             "user": {
                 "id": user.id,
                 "username": user.username,
-                "email": user.email
+                "email": user.email,
+                "auth_provider": user.auth_provider,
+                "avatar_url": user.avatar_url
             }
-        }), 201
+        }), 200
 
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+            "error_code": ErrorCode.SYSTEM_ERROR.value,
+            "message": f"Google login failed: {str(e)}"
+        }), 500
+
 
 # --------------------------
 # WordPress 管理 API

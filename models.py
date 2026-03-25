@@ -8,12 +8,17 @@ class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=True)
-    password_hash = db.Column(db.String(256), nullable=False)
+    username = db.Column(db.String(80), unique=True, nullable=True)  # Google登录时可选
+    email = db.Column(db.String(120), unique=True, nullable=False)  # 邮箱是必需的
+    password_hash = db.Column(db.String(256), nullable=True)  # 允许为空（第三方登录）
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
+
+    # OAuth 字段
+    google_id = db.Column(db.String(120), unique=True, nullable=True)
+    auth_provider = db.Column(db.String(20), default='email')  # 'email', 'google'
+    avatar_url = db.Column(db.String(500), nullable=True)
 
     # 密码处理方法
     @property
@@ -33,6 +38,23 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f'<User {self.username}>'
+
+    @staticmethod
+    def generate_username(email=None):
+        """生成唯一的用户名"""
+        if not email:
+            base_username = 'user'
+        else:
+            base_username = email.split('@')[0]
+
+        # 确保用户名唯一
+        username = base_username
+        counter = 1
+        while User.query.filter_by(username=username).first():
+            username = f"{base_username}{counter}"
+            counter += 1
+
+        return username
 
 class Article(db.Model):
     __tablename__ = 'articles'

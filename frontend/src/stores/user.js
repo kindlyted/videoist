@@ -131,6 +131,61 @@ export const useUserStore = defineStore('user', {
         }
         return { success: false, error: error.response?.data?.error || 'user.updatePasswordFailed' }
       }
+    },
+
+    // 发送邮箱验证码
+    async sendVerificationCode(email) {
+      try {
+        const response = await api.post('/send-verification-code', { email })
+        return { success: true, message: response.data.message }
+      } catch (error) {
+        if (error.response?.data?.error_code) {
+          return { success: false, error: error.response.data };
+        }
+        return { success: false, error: error.response?.data?.message || 'Failed to send code' }
+      }
+    },
+
+    // 邮箱验证码登录/注册
+    async verifyAndLogin(data) {
+      try {
+        const response = await api.post('/verify-and-login', data)
+        const { user, access_token } = response.data
+
+        this.user = user
+        this.token = access_token
+        this.isAuthenticated = true
+
+        localStorage.setItem('access_token', access_token)
+
+        return { success: true }
+      } catch (error) {
+        if (error.response?.data?.error_code) {
+          return { success: false, error: error.response.data };
+        }
+        return { success: false, error: error.response?.data?.message || 'login.loginFailed' }
+      }
+    },
+
+    // Google登录
+    async googleLogin(accessToken) {
+      try {
+        const response = await api.post('/google-login', { access_token: accessToken })
+        const { user, access_token } = response.data
+
+        this.user = user
+        this.token = access_token
+        this.isAuthenticated = true
+
+        localStorage.setItem('access_token', access_token)
+
+        return { success: true }
+      } catch (error) {
+        if (error.response?.data?.error_code) {
+          return { success: false, error: error.response.data };
+        }
+        return { success: false, error: error.response?.data?.message || 'Google login failed' }
+      }
     }
   }
 })

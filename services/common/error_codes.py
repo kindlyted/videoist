@@ -25,6 +25,15 @@ class ErrorCode(Enum):
     # 验证码相关错误
     INVALID_VERIFICATION_CODE = "VERIFY_001"
     EXPIRED_VERIFICATION_CODE = "VERIFY_002"
+
+    # 邮件相关错误
+    EMAIL_SEND_FAILED = "EMAIL_001"
+
+    # OAuth相关错误
+    INVALID_TOKEN = "OAUTH_001"
+
+    # 系统错误
+    SYSTEM_ERROR = "SYS_001"
     
     # 通用错误
     UNKNOWN_ERROR = "COMMON_001"
@@ -82,6 +91,9 @@ ERROR_MESSAGES_ZH = {
     ErrorCode.MISSING_PASSWORD: "必须提供新密码",
     ErrorCode.INVALID_VERIFICATION_CODE: "验证码无效",
     ErrorCode.EXPIRED_VERIFICATION_CODE: "验证码已过期",
+    ErrorCode.EMAIL_SEND_FAILED: "发送邮件失败",
+    ErrorCode.INVALID_TOKEN: "令牌无效",
+    ErrorCode.SYSTEM_ERROR: "系统错误",
     ErrorCode.UNKNOWN_ERROR: "未知错误",
     ErrorCode.INVALID_PLATFORM: "必须指定平台名称",
     
@@ -138,6 +150,9 @@ ERROR_MESSAGES_EN = {
     ErrorCode.MISSING_PASSWORD: "New password is required",
     ErrorCode.INVALID_VERIFICATION_CODE: "Invalid verification code",
     ErrorCode.EXPIRED_VERIFICATION_CODE: "Expired verification code",
+    ErrorCode.EMAIL_SEND_FAILED: "Failed to send email",
+    ErrorCode.INVALID_TOKEN: "Invalid token",
+    ErrorCode.SYSTEM_ERROR: "System error",
     ErrorCode.UNKNOWN_ERROR: "Unknown error",
     ErrorCode.INVALID_PLATFORM: "Platform name is required",
     
