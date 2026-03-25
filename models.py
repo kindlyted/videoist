@@ -12,8 +12,12 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)  # 邮箱是必需的
     password_hash = db.Column(db.String(256), nullable=True)  # 允许为空（第三方登录）
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    is_active = db.Column(db.Boolean, default=True)
+    is_active = db.Column(db.Boolean, default=False)  # 默认未激活，需要邮箱验证
     is_admin = db.Column(db.Boolean, default=False)
+
+    # 邮箱激活相关字段
+    activation_token = db.Column(db.String(200), nullable=True)
+    activation_expires_at = db.Column(db.DateTime, nullable=True)
 
     # OAuth 字段
     google_id = db.Column(db.String(120), unique=True, nullable=True)

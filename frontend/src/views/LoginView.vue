@@ -3,13 +3,13 @@
     <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
       <h2 class="text-2xl font-bold text-center mb-8">{{ t('login.title') }}</h2>
 
-      <!-- 邮箱验证码登录 -->
-      <form @submit.prevent="handleEmailLogin" class="space-y-6">
+      <!-- 邮箱密码登录 -->
+      <form @submit.prevent="handlePasswordLogin" class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('login.email') }}</label>
           <div class="relative">
             <input
-              v-model="emailForm.email"
+              v-model="passwordForm.email"
               type="email"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
               placeholder="your@email.com"
@@ -19,25 +19,33 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('login.code') }}</label>
-          <div class="flex gap-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('login.password') }}</label>
+          <div class="relative">
             <input
-              v-model="emailForm.code"
-              type="text"
-              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
-              :placeholder="t('login.codePlaceholder') || '6-digit verification code'"
-              maxlength="6"
+              v-model="passwordForm.password"
+              type="password"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+              placeholder="••••••••"
               required
             />
-            <button
-              type="button"
-              @click="sendCode"
-              :disabled="countdown > 0"
-              class="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
-            >
-              {{ countdown > 0 ? `${countdown}s` : t('login.getCode') }}
-            </button>
           </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <label class="flex items-center">
+            <input
+              v-model="rememberMe"
+              type="checkbox"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <span class="ml-2 text-sm text-gray-600">{{ t('login.rememberMe') }}</span>
+          </label>
+          <router-link
+            to="/reset-password"
+            class="text-sm text-blue-600 hover:text-blue-800"
+          >
+            {{ t('login.forgotPassword') }}
+          </router-link>
         </div>
 
         <button
@@ -96,55 +104,27 @@ const router = useRouter()
 const userStore = useUserStore()
 const { t } = useI18n()
 
-// 邮箱登录表单
-const emailForm = ref({
+// 邮箱密码登录表单
+const passwordForm = ref({
   email: '',
-  code: ''
+  password: ''
 })
 
-// 验证码倒计时
-const countdown = ref(0)
+// 记住我
+const rememberMe = ref(false)
 
 // 加载状态
 const loading = ref(false)
 
-// 发送验证码
-const sendCode = async () => {
-  if (!emailForm.value.email) {
-    alert('请输入邮箱地址')
-    return
-  }
 
-  const { success, error } = await userStore.sendVerificationCode(emailForm.value.email)
-
-  if (success) {
-    alert('验证码已发送到您的邮箱')
-    countdown.value = 60
-    const timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-      }
-    }, 1000)
-  } else {
-    const errorResult = handleApiError(error)
-    alert(errorResult.message || '发送验证码失败')
-  }
-}
-
-// 邮箱验证码登录/注册
-const handleEmailLogin = async () => {
-  if (!emailForm.value.code || emailForm.value.code.length !== 6) {
-    alert('请输入6位验证码')
-    return
-  }
-
+// 邮箱密码登录
+const handlePasswordLogin = async () => {
   loading.value = true
 
   try {
-    const { success, error } = await userStore.verifyAndLogin({
-      email: emailForm.value.email,
-      code: emailForm.value.code
+    const { success, error } = await userStore.login({
+      email: passwordForm.value.email,
+      password: passwordForm.value.password
     })
 
     loading.value = false
@@ -153,12 +133,32 @@ const handleEmailLogin = async () => {
       router.push('/')
     } else {
       const errorResult = handleApiError(error)
-      alert(errorResult.message || '登录失败')
+      let errorMessage = ''
+
+      if (errorResult.message) {
+        errorMessage = errorResult.message
+      } else if (errorResult.messageKey) {
+        errorMessage = t(errorResult.messageKey)
+      } else if (errorResult.errorCode) {
+        errorMessage = t(getErrorMessageKey(errorResult.errorCode))
+      }
+
+      alert(errorMessage || t('login.loginFailed'))
     }
   } catch (err) {
     loading.value = false
     const errorResult = handleApiError(err)
-    alert(errorResult.message || '登录失败')
+    let errorMessage = ''
+
+    if (errorResult.message) {
+      errorMessage = errorResult.message
+    } else if (errorResult.messageKey) {
+      errorMessage = t(errorResult.messageKey)
+    } else if (errorResult.errorCode) {
+      errorMessage = t(getErrorMessageKey(errorResult.errorCode))
+    }
+
+    alert(errorMessage || t('login.loginFailed'))
   }
 }
 

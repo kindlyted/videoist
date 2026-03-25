@@ -27,7 +27,8 @@
     "VERIFY_001": "验证码无效",
     "VERIFY_002": "验证码已过期",
     "COMMON_001": "未知错误",
-    "COMMON_002": "必须指定平台名称"
+    "COMMON_002": "必须指定平台名称",
+    "PWD_002": "密码错误"
   },
   "settings": {
     "title": "设置",
@@ -121,25 +122,26 @@
     "login": "登录",
     "logout": "退出",
     "email": "邮箱地址",
-    "code": "验证码",
-    "codePlaceholder": "6位验证码",
-    "getCode": "获取验证码",
-    "sendCode": "发送验证码",
     "or": "或",
-    "orLoginWith": "或使用以下方式登录"
+    "orLoginWith": "使用第三方账号"
   },
   "register": {
     "title": "注册",
     "username": "用户名",
-    "email": "邮箱",
+    "email": "邮箱地址",
     "password": "密码",
     "confirmPassword": "确认密码",
     "registering": "注册中...",
     "hasAccount": "已有账户？",
     "passwordMismatch": "密码不匹配",
+    "passwordTooShort": "密码长度至少6位",
     "registrationFailed": "注册失败",
-    "orRegisterWith": "或使用以下方式注册",
-    "terms": "注册即表示您同意我们的服务条款"
+    "orRegisterWith": "使用第三方账号",
+    "terms": "注册即表示您同意我们的服务条款",
+    "activationSent": "注册成功！请查收邮件并激活账户。",
+    "googleSdkNotLoaded": "Google登录组件未加载，请刷新页面重试",
+    "googleNotConfigured": "Google OAuth未配置，请在环境变量中设置VITE_GOOGLE_CLIENT_ID",
+    "googleLoginFailed": "Google登录失败"
   },
   "resetPassword": {
     "title": "重置密码",
@@ -198,6 +200,26 @@
     "passwordMismatch": "两次输入的密码不一致",
     "success": "密码重置成功",
     "failure": "操作失败"
+  },
+  "activation": {
+    "title": "账户激活",
+    "loading": "正在激活您的账户...",
+    "successTitle": "激活成功！",
+    "successMessage": "您的账户已成功激活，现在可以登录了。",
+    "goToLogin": "前往登录",
+    "failureTitle": "激活失败",
+    "resendEmail": "重新发送激活邮件",
+    "resending": "发送中...",
+    "backToLogin": "返回登录页",
+    "enterEmail": "请输入您的注册邮箱：",
+    "emailSent": "激活邮件已重新发送，请查收！",
+    "sendFailed": "发送失败，请稍后重试",
+    "errors": {
+      "invalidLink": "无效的激活链接",
+      "expired": "激活链接已过期，请重新注册",
+      "used": "激活链接已使用",
+      "network": "网络错误，请稍后重试"
+    }
   },
   "videoCreation": {
     "title": "AI视频创作助手",

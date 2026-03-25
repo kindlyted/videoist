@@ -32,6 +32,18 @@ class ErrorCode(Enum):
     # OAuth相关错误
     INVALID_TOKEN = "OAUTH_001"
 
+    # 密码相关错误
+    PASSWORD_TOO_SHORT = "PWD_001"
+    INVALID_PASSWORD = "PWD_002"
+
+    # 账户激活相关错误
+    ACCOUNT_NOT_ACTIVATED = "ACT_001"
+    INVALID_EMAIL = "EMAIL_001"
+    ACTIVATION_INVALID_TOKEN = "ACT_002"
+    ACTIVATION_EXPIRED = "ACT_003"
+    ACTIVATION_ALREADY_USED = "ACT_004"
+    ACTIVATION_ALREADY_ACTIVE = "ACT_005"
+
     # 系统错误
     SYSTEM_ERROR = "SYS_001"
     
@@ -76,6 +88,7 @@ class ErrorCode(Enum):
 
 # 中文错误信息映射表
 ERROR_MESSAGES_ZH = {
+    ErrorCode.INVALID_PASSWORD: "密码错误",
     ErrorCode.USERNAME_OR_PASSWORD_ERROR: "用户名或密码错误",
     ErrorCode.USER_NOT_FOUND: "用户不存在",
     ErrorCode.CURRENT_PASSWORD_ERROR: "当前密码错误",
@@ -96,7 +109,16 @@ ERROR_MESSAGES_ZH = {
     ErrorCode.SYSTEM_ERROR: "系统错误",
     ErrorCode.UNKNOWN_ERROR: "未知错误",
     ErrorCode.INVALID_PLATFORM: "必须指定平台名称",
-    
+
+    # 账户激活相关错误
+    ErrorCode.ACCOUNT_NOT_ACTIVATED: "账户未激活，请查收邮件并激活",
+    ErrorCode.PASSWORD_TOO_SHORT: "密码长度至少6位",
+    ErrorCode.INVALID_EMAIL: "请输入有效的邮箱地址",
+    ErrorCode.ACTIVATION_INVALID_TOKEN: "激活链接无效",
+    ErrorCode.ACTIVATION_EXPIRED: "激活链接已过期，请重新注册",
+    ErrorCode.ACTIVATION_ALREADY_USED: "激活链接已使用",
+    ErrorCode.ACTIVATION_ALREADY_ACTIVE: "账户已激活",
+
     # 登出相关错误
     ErrorCode.LOGOUT_SUCCESS: "成功登出",
     
@@ -135,6 +157,7 @@ ERROR_MESSAGES_ZH = {
 
 # 英文错误信息映射表
 ERROR_MESSAGES_EN = {
+    ErrorCode.INVALID_PASSWORD: "Incorrect password",
     ErrorCode.USERNAME_OR_PASSWORD_ERROR: "Username or password error",
     ErrorCode.USER_NOT_FOUND: "User not found",
     ErrorCode.CURRENT_PASSWORD_ERROR: "Current password error",
@@ -185,6 +208,15 @@ ERROR_MESSAGES_EN = {
     ErrorCode.NOTE_ACCESS_DENIED: "Access denied to this note",
     ErrorCode.NOTE_DELETION_DENIED: "Deletion denied for this note",
     
+    # 账户激活相关错误
+    ErrorCode.ACCOUNT_NOT_ACTIVATED: "Account not activated. Please check your email and activate your account.",
+    ErrorCode.PASSWORD_TOO_SHORT: "Password must be at least 6 characters",
+    ErrorCode.INVALID_EMAIL: "Please enter a valid email address",
+    ErrorCode.ACTIVATION_INVALID_TOKEN: "Invalid activation link",
+    ErrorCode.ACTIVATION_EXPIRED: "Activation link has expired. Please register again.",
+    ErrorCode.ACTIVATION_ALREADY_USED: "Activation link has already been used",
+    ErrorCode.ACTIVATION_ALREADY_ACTIVE: "Account is already activated",
+
     # 平台登录相关错误
     ErrorCode.USER_NOT_LOGGED_IN: "User not logged in",
     ErrorCode.PLATFORM_NOT_SPECIFIED: "Platform not specified",

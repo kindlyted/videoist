@@ -27,7 +27,8 @@
     "VERIFY_001": "Invalid verification code",
     "VERIFY_002": "Expired verification code",
     "COMMON_001": "Unknown error",
-    "COMMON_002": "Platform name is required"
+    "COMMON_002": "Platform name is required",
+    "PWD_002": "Incorrect password"
   },
   "navbar": {
     "searchPlaceholder": "Search videos..."
@@ -61,25 +62,26 @@
     "login": "Login",
     "logout": "Logout",
     "email": "Email Address",
-    "code": "Verification Code",
-    "codePlaceholder": "6-digit verification code",
-    "getCode": "Get Code",
-    "sendCode": "Send Code",
     "or": "Or",
-    "orLoginWith": "Or login with"
+    "orLoginWith": "Login with"
   },
   "register": {
     "title": "Register",
     "username": "Username",
-    "email": "Email",
+    "email": "Email Address",
     "password": "Password",
     "confirmPassword": "Confirm Password",
     "registering": "Registering...",
     "hasAccount": "Already have an account?",
     "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 6 characters",
     "registrationFailed": "Registration failed",
-    "orRegisterWith": "Or register with",
-    "terms": "By registering, you agree to our Terms of Service"
+    "orRegisterWith": "Register with",
+    "terms": "By registering, you agree to our Terms of Service",
+    "activationSent": "Registration successful! Please check your email to activate your account.",
+    "googleSdkNotLoaded": "Google login component not loaded, please refresh the page",
+    "googleNotConfigured": "Google OAuth not configured, please set VITE_GOOGLE_CLIENT_ID in environment variables",
+    "googleLoginFailed": "Google login failed"
   },
   "resetPassword": {
     "title": "Reset Password",
@@ -138,6 +140,26 @@
     "passwordMismatch": "Passwords do not match",
     "success": "Password reset successful",
     "failure": "Operation failed"
+  },
+  "activation": {
+    "title": "Account Activation",
+    "loading": "Activating your account...",
+    "successTitle": "Activation Successful!",
+    "successMessage": "Your account has been successfully activated. You can now log in.",
+    "goToLogin": "Go to Login",
+    "failureTitle": "Activation Failed",
+    "resendEmail": "Resend Activation Email",
+    "resending": "Sending...",
+    "backToLogin": "Back to Login",
+    "enterEmail": "Please enter your registered email:",
+    "emailSent": "Activation email has been resent. Please check your inbox!",
+    "sendFailed": "Failed to send. Please try again later.",
+    "errors": {
+      "invalidLink": "Invalid activation link",
+      "expired": "Activation link has expired. Please register again.",
+      "used": "Activation link has already been used",
+      "network": "Network error. Please try again later."
+    }
   },
   "settings": {
     "title": "Settings",

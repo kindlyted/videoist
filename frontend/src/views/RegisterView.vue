@@ -3,13 +3,13 @@
     <div class="w-full max-w-md bg-white rounded-lg shadow-md p-8">
       <h2 class="text-2xl font-bold text-center mb-8">{{ t('register.title') }}</h2>
 
-      <!-- 邮箱注册 -->
-      <form @submit.prevent="handleEmailRegister" class="space-y-6">
+      <!-- 邮箱密码注册表单 -->
+      <form @submit.prevent="handleRegister" class="space-y-6">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('register.email') }}</label>
           <div class="relative">
             <input
-              v-model="emailForm.email"
+              v-model="form.email"
               type="email"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
               placeholder="your@email.com"
@@ -19,25 +19,60 @@
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('login.code') }}</label>
-          <div class="flex gap-3">
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('register.password') }}</label>
+          <div class="relative">
             <input
-              v-model="emailForm.code"
-              type="text"
-              class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
-              :placeholder="t('login.codePlaceholder') || '6-digit verification code'"
-              maxlength="6"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+              :placeholder="t('register.password')"
               required
             />
             <button
               type="button"
-              @click="sendCode"
-              :disabled="countdown > 0"
-              class="px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px]"
+              @click="showPassword = !showPassword"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
             >
-              {{ countdown > 0 ? `${countdown}s` : t('login.getCode') }}
+              <!-- Eye open icon -->
+              <svg v-if="!showPassword" class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <!-- Eye slash icon -->
+              <svg v-else class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
             </button>
           </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">{{ t('register.confirmPassword') }}</label>
+          <div class="relative">
+            <input
+              v-model="form.password2"
+              :type="showConfirmPassword ? 'text' : 'password'"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-150"
+              :placeholder="t('register.confirmPassword')"
+              required
+            />
+            <button
+              type="button"
+              @click="showConfirmPassword = !showConfirmPassword"
+              class="absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
+            >
+              <!-- Eye open icon -->
+              <svg v-if="!showConfirmPassword" class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <!-- Eye slash icon -->
+              <svg v-else class="h-5 w-5 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+            </button>
+          </div>
+          <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
         </div>
 
         <button
@@ -58,7 +93,7 @@
         </div>
       </div>
 
-      <!-- Google注册 -->
+      <!-- 第三方注册 -->
       <button
         @click="handleGoogleLogin"
         :disabled="loading"
@@ -73,10 +108,6 @@
         {{ t('register.orRegisterWith') }} Google
       </button>
 
-      <p class="mt-4 text-xs text-gray-500 text-center">
-        {{ t('register.terms') }}
-      </p>
-
       <div class="mt-6 text-center">
         <p class="text-sm text-gray-600">
           {{ t('register.hasAccount') }}
@@ -90,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { useI18n } from 'vue-i18n'
@@ -100,83 +131,87 @@ const router = useRouter()
 const userStore = useUserStore()
 const { t } = useI18n()
 
-// 邮箱注册表单
-const emailForm = ref({
+// 注册表单
+const form = ref({
   email: '',
-  code: ''
+  password: '',
+  password2: ''
 })
 
-// 验证码倒计时
-const countdown = ref(0)
+// 密码显示状态
+const showPassword = ref(false)
+const showConfirmPassword = ref(false)
+
+// 错误信息
+const passwordError = ref('')
 
 // 加载状态
 const loading = ref(false)
 
-// 发送验证码
-const sendCode = async () => {
-  if (!emailForm.value.email) {
-    alert('请输入邮箱地址')
+// 密码确认验证
+watch(
+  () => form.value.password2,
+  (newPassword2) => {
+    if (newPassword2 && newPassword2 !== form.value.password) {
+      passwordError.value = t('register.passwordMismatch')
+    } else {
+      passwordError.value = ''
+    }
+  }
+)
+
+// 注册方法
+const handleRegister = async () => {
+  // 密码确认验证
+  if (form.value.password !== form.value.password2) {
+    alert(t('register.passwordMismatch'))
     return
   }
 
-  const { success, error } = await userStore.sendVerificationCode(emailForm.value.email)
-
-  if (success) {
-    alert('验证码已发送到您的邮箱')
-    countdown.value = 60
-    const timer = setInterval(() => {
-      countdown.value--
-      if (countdown.value <= 0) {
-        clearInterval(timer)
-      }
-    }, 1000)
-  } else {
-    const errorResult = handleApiError(error)
-    alert(errorResult.message || '发送验证码失败')
-  }
-}
-
-// 邮箱验证码注册
-const handleEmailRegister = async () => {
-  if (!emailForm.value.code || emailForm.value.code.length !== 6) {
-    alert('请输入6位验证码')
+  // 密码长度验证
+  if (form.value.password.length < 6) {
+    alert(t('register.passwordTooShort'))
     return
   }
 
   loading.value = true
 
   try {
-    const { success, error } = await userStore.verifyAndLogin({
-      email: emailForm.value.email,
-      code: emailForm.value.code
+    const { success, error } = await userStore.register({
+      email: form.value.email,
+      password: form.value.password
     })
 
     loading.value = false
 
     if (success) {
-      router.push('/')
+      // 注册成功，提示用户去邮箱激活
+      alert(t('register.activationSent'))
+      // 跳转到登录页
+      router.push('/login')
     } else {
+      // 处理错误信息
       const errorResult = handleApiError(error)
-      alert(errorResult.message || '注册失败')
+      alert(errorResult.message || t('register.registrationFailed'))
     }
   } catch (err) {
     loading.value = false
     const errorResult = handleApiError(err)
-    alert(errorResult.message || '注册失败')
+    alert(errorResult.message || t('register.registrationFailed'))
   }
 }
 
 // Google注册/登录
 const handleGoogleLogin = async () => {
   if (typeof google === 'undefined' || !google.accounts) {
-    alert('Google登录组件未加载，请刷新页面重试')
+    alert(t('register.googleSdkNotLoaded'))
     return
   }
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id'
 
   if (clientId === 'your-google-client-id') {
-    alert('Google OAuth未配置，请在环境变量中设置VITE_GOOGLE_CLIENT_ID')
+    alert(t('register.googleNotConfigured'))
     return
   }
 
@@ -186,7 +221,7 @@ const handleGoogleLogin = async () => {
     callback: async (response) => {
       if (response.error) {
         console.error('Google login error:', response.error)
-        alert('Google登录失败')
+        alert(t('register.googleLoginFailed'))
         return
       }
 
@@ -198,7 +233,7 @@ const handleGoogleLogin = async () => {
         router.push('/')
       } else {
         const errorResult = handleApiError(error)
-        alert(errorResult.message || 'Google登录失败')
+        alert(errorResult.message || t('register.googleLoginFailed'))
       }
     }
   }).requestAccessToken()

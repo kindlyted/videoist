@@ -3,7 +3,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, create_refresh_token
 from models import db, User, WordPressSite, WechatAccount, PlatformCookies
-from datetime import timedelta
+from datetime import datetime, timedelta
 import time
 import hashlib
 import os
@@ -29,37 +29,252 @@ def health_check():
     }), 200
 
 # --------------------------
-# 用户认证相关 API
+# 账户激活 API
 # --------------------------
 
-@auth_bp.route('/login', methods=['POST'])
-def login():
-    """邮箱验证码登录接口"""
+@auth_bp.route('/activate', methods=['GET'])
+def activate_account():
+    """账户激活接口"""
+    token = request.args.get('token')
+    # 获取语言参数，默认中文
+    lang = request.args.get('lang', 'zh')
+    if lang.startswith('zh'):
+        lang = 'zh'
+    else:
+        lang = 'en'
+
+    if not token:
+        return jsonify({
+            "success": False,
+            "message": get_error_message(ErrorCode.ACTIVATION_INVALID_TOKEN, lang)
+        }), 400
+
+    # 查找用户
+    user = User.query.filter_by(activation_token=token).first()
+
+    if not user:
+        return jsonify({
+            "success": False,
+            "message": get_error_message(ErrorCode.ACTIVATION_ALREADY_USED, lang)
+        }), 400
+
+    if user.is_active:
+        return jsonify({
+            "success": False,
+            "message": get_error_message(ErrorCode.ACTIVATION_ALREADY_ACTIVE, lang)
+        }), 400
+
+    # 检查是否过期（24小时）
+    if user.activation_expires_at and user.activation_expires_at < datetime.utcnow():
+        return jsonify({
+            "success": False,
+            "message": get_error_message(ErrorCode.ACTIVATION_EXPIRED, lang)
+        }), 400
+
+    # 激活账户
+    user.is_active = True
+    user.activation_token = None
+    user.activation_expires_at = None
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "账户激活成功！" if lang == 'zh' else "Account activated successfully!"
+    })
+
+@auth_bp.route('/resend-activation', methods=['POST'])
+def resend_activation():
+    """重新发送激活邮件"""
     data = request.get_json()
-    if not data or 'email' not in data or 'code' not in data:
+    if not data or 'email' not in data:
         return jsonify({
             "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
         }), 400
 
     email = data['email'].strip().lower()
-    code = data['code'].strip()
+    user = User.query.filter_by(email=email).first()
 
-    # 验证验证码
-    is_valid, message = verify_code(email, code)
-    if not is_valid:
+    if not user:
         return jsonify({
-            "error_code": ErrorCode.INVALID_VERIFICATION_CODE.value,
-            "message": message
+            "success": False,
+            "message": "用户不存在"
+        }), 404
+
+    if user.is_active:
+        return jsonify({
+            "success": False,
+            "message": "账户已激活"
         }), 400
 
-    # 查找用户
+    # 生成新的激活token
+    from services.common.email_service import generate_activation_token
+    token = generate_activation_token()
+    user.activation_token = token
+    user.activation_expires_at = datetime.utcnow() + timedelta(hours=24)
+    db.session.commit()
+
+    # 发送激活邮件
+    try:
+        from services.common.email_service import send_activation_email
+        send_activation_email(email, token)
+
+        return jsonify({
+            "success": True,
+            "message": "激活邮件已重新发送"
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"发送邮件失败: {str(e)}"
+        }), 500
+
+# --------------------------
+# 注册相关 API
+# --------------------------
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    """邮箱密码注册接口，需要激活"""
+    data = request.get_json()
+    print(f"Register request data: {data}")
+    if not data or 'email' not in data or 'password' not in data:
+        print("Error: Missing email or password")
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
+
+    email = data['email'].strip().lower()
+    password = data['password']
+
+    print(f"Email: {email}, Password length: {len(password)}")
+
+    # 验证邮箱格式
+    if '@' not in email:
+        print("Error: Invalid email format")
+        return jsonify({
+            "error_code": ErrorCode.INVALID_EMAIL.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.INVALID_EMAIL]
+        }), 400
+
+    # 验证密码强度
+    if len(password) < 6:
+        print("Error: Password too short")
+        return jsonify({
+            "error_code": ErrorCode.PASSWORD_TOO_SHORT.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.PASSWORD_TOO_SHORT]
+        }), 400
+
+    # 检查邮箱是否已存在
+    if User.query.filter_by(email=email).first():
+        print("Error: Email already exists")
+        return jsonify({
+            "error_code": ErrorCode.EMAIL_EXISTS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.EMAIL_EXISTS]
+        }), 400
+
+    # 生成激活token
+    from services.common.email_service import generate_activation_token
+    token = generate_activation_token()
+
+    # 创建用户（未激活状态）
+    user = User(
+        email=email,
+        auth_provider='email',
+        activation_token=token,
+        activation_expires_at=datetime.utcnow() + timedelta(hours=24)
+    )
+    user.set_password(password)
+
+    # 生成用户名
+    username = User.generate_username(email)
+    user.username = username
+
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Database commit error: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"注册失败: {str(e)}"
+        }), 500
+
+    # 发送激活邮件
+    try:
+        from services.common.email_service import send_activation_email
+        send_activation_email(email, token)
+
+        return jsonify({
+            "success": True,
+            "message": "注册成功！请查收邮件并激活账户。",
+            "user_id": user.id
+        })
+    except Exception as e:
+        # 如果邮件发送失败，回滚用户创建
+        db.session.rollback()
+        print(f"Email send error: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"注册失败，发送激活邮件失败: {str(e)}"
+        }), 500
+
+# --------------------------
+# 用户认证相关 API
+# --------------------------
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    """支持邮箱验证码登录和邮箱密码登录"""
+    data = request.get_json()
+    if not data or 'email' not in data:
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
+
+    email = data['email'].strip().lower()
     user = User.query.filter_by(email=email).first()
+
     if not user:
         return jsonify({
             "error_code": ErrorCode.USER_NOT_FOUND.value,
             "message": ERROR_MESSAGES_ZH[ErrorCode.USER_NOT_FOUND]
         }), 404
+
+    # 检查账户是否激活
+    if not user.is_active:
+        return jsonify({
+            "error_code": ErrorCode.ACCOUNT_NOT_ACTIVATED.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.ACCOUNT_NOT_ACTIVATED]
+        }), 401
+
+    # 如果使用验证码登录
+    if 'code' in data:
+        code = data['code'].strip()
+        # 验证验证码
+        is_valid, message = verify_code(email, code)
+        if not is_valid:
+            return jsonify({
+                "error_code": ErrorCode.INVALID_VERIFICATION_CODE.value,
+                "message": message
+            }), 400
+
+    # 如果使用密码登录
+    elif 'password' in data:
+        password = data['password']
+        if not user.verify_password(password):
+            return jsonify({
+                "error_code": ErrorCode.INVALID_PASSWORD.value,
+                "message": ERROR_MESSAGES_ZH[ErrorCode.INVALID_PASSWORD]
+            }), 401
+    else:
+        return jsonify({
+            "error_code": ErrorCode.MISSING_REQUIRED_FIELDS.value,
+            "message": ERROR_MESSAGES_ZH[ErrorCode.MISSING_REQUIRED_FIELDS]
+        }), 400
 
     # 生成 Token（有效期7天）
     access_token = create_access_token(

@@ -11,6 +11,7 @@ import VideoPreviewView from '@/views/VideoPreviewView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import ResetPasswordView from '@/views/ResetPasswordView.vue'
 import ResetPasswordConfirmView from '@/views/ResetPasswordConfirmView.vue'
+import ActivateView from '@/views/ActivateView.vue'
 import NotesView from '@/views/NotesView.vue'
 import NoteListView from '@/views/NoteListView.vue'
 import BreakpointTestView from '@/views/BreakpointTestView.vue'
@@ -33,6 +34,11 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView
+    },
+    {
+      path: '/activate',
+      name: 'activate',
+      component: ActivateView
     },
     {
       path: '/dashboard',
